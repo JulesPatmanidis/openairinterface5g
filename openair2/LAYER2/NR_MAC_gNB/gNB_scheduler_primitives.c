@@ -2610,6 +2610,17 @@ void create_dl_harq_list(NR_UE_sched_ctrl_t *sched_ctrl,
                          const NR_PDSCH_ServingCellConfig_t *pdsch) {
   const int nrofHARQ = pdsch && pdsch->nrofHARQ_ProcessesForPDSCH ?
                        get_nrofHARQ_ProcessesForPDSCH(*pdsch->nrofHARQ_ProcessesForPDSCH) : 8;
+  const int old_nrofHARQ = sched_ctrl->available_dl_harq.len;
+  if (old_nrofHARQ > nrofHARQ) {
+    LOG_W(NR_MAC, "HARQ list to be smaller (nrofHARQ %d, old_nrofHARQ %d), destroying previous HARQ list\n", nrofHARQ, old_nrofHARQ);
+    destroy_nr_list(&sched_ctrl->available_dl_harq);
+    destroy_nr_list(&sched_ctrl->feedback_dl_harq);
+    destroy_nr_list(&sched_ctrl->retrans_dl_harq);
+    sched_ctrl->available_dl_harq.len = 0;
+    sched_ctrl->feedback_dl_harq.len = 0;
+    sched_ctrl->retrans_dl_harq.len = 0;
+  }
+
   // add all available DL HARQ processes for this UE
   AssertFatal(sched_ctrl->available_dl_harq.len == sched_ctrl->feedback_dl_harq.len
               && sched_ctrl->available_dl_harq.len == sched_ctrl->retrans_dl_harq.len,
@@ -2626,10 +2637,6 @@ void create_dl_harq_list(NR_UE_sched_ctrl_t *sched_ctrl,
   } else if (sched_ctrl->available_dl_harq.len == nrofHARQ) {
     LOG_D(NR_MAC, "nrofHARQ %d already configured\n", nrofHARQ);
   } else {
-    const int old_nrofHARQ = sched_ctrl->available_dl_harq.len;
-    AssertFatal(nrofHARQ > old_nrofHARQ,
-                "cannot resize HARQ list to be smaller (nrofHARQ %d, old_nrofHARQ %d)\n",
-                nrofHARQ, old_nrofHARQ);
     resize_nr_list(&sched_ctrl->available_dl_harq, nrofHARQ);
     for (int harq = old_nrofHARQ; harq < nrofHARQ; harq++)
       add_tail_nr_list(&sched_ctrl->available_dl_harq, harq);
@@ -2700,6 +2707,11 @@ void mac_remove_nr_ue(gNB_MAC_INST *nr_mac, rnti_t rnti)
  pthread_mutex_unlock(&UE_info->mutex);
 
  delete_nr_ue_data(UE, nr_mac->common_channels, &UE_info->uid_allocator);
+}
+
+void nr_rrc_mac_remove_ue(module_id_t mod_id, rnti_t rnti) {
+  gNB_MAC_INST *gNB_mac = RC.nrmac[mod_id];
+  mac_remove_nr_ue(gNB_mac, rnti);
 }
 
 void nr_mac_remove_ra_rnti(module_id_t mod_id, rnti_t rnti) {
