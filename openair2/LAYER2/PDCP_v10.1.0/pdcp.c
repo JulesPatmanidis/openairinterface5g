@@ -597,9 +597,16 @@ bool pdcp_data_req(protocol_ctxt_t  *ctxt_pP,
    * so we return true afterwards
    */
 
-  for (pdcp_uid=0; pdcp_uid< MAX_MOBILES_PER_ENB; pdcp_uid++) {
-    if (pdcp_enb[ctxt_pP->module_id].rnti[pdcp_uid] == ctxt_pP->rnti )
-      break;
+  if (ctxt_pP->enb_flag == ENB_FLAG_NO)
+    pdcp_uid = 0;
+  else
+    for (pdcp_uid = 0; pdcp_uid < MAX_MOBILES_PER_ENB; pdcp_uid++)
+      if (pdcp_enb[ctxt_pP->module_id].rnti[pdcp_uid] == ctxt_pP->rnti)
+        break;
+
+  if (pdcp_uid == MAX_MOBILES_PER_ENB) {
+    LOG_W(PDCP, "stats on not recorded rnti: %x\n", ctxt_pP->rnti);
+    pdcp_uid = 0;
   }
 
   LOG_D(PDCP,"ueid %d lcid %d tx seq num %d\n", pdcp_uid, (int)(rb_idP+rb_offset), current_sn);
@@ -1159,10 +1166,16 @@ pdcp_data_ind(
   }
 
   /* Update PDCP statistics */
-  for (pdcp_uid=0; pdcp_uid< MAX_MOBILES_PER_ENB; pdcp_uid++) {
-    if (pdcp_enb[ctxt_pP->module_id].rnti[pdcp_uid] == ctxt_pP->rnti ) {
-      break;
-    }
+  if (ctxt_pP->enb_flag == ENB_FLAG_NO)
+    pdcp_uid = 0;
+  else
+    for (pdcp_uid = 0; pdcp_uid < MAX_MOBILES_PER_ENB; pdcp_uid++)
+      if (pdcp_enb[ctxt_pP->module_id].rnti[pdcp_uid] == ctxt_pP->rnti)
+        break;
+
+  if (pdcp_uid == MAX_MOBILES_PER_ENB) {
+    LOG_W(PDCP, "stats on not recorded rnti: %x\n", ctxt_pP->rnti);
+    pdcp_uid = 0;
   }
 
   Pdcp_stats_rx[ctxt_pP->module_id][pdcp_uid][rb_idP+rb_offset]++;
