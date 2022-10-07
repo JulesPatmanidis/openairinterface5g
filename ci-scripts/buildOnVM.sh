@@ -62,7 +62,7 @@ function build_on_vm {
     echo "ARCHIVES_LOC        = $ARCHIVES_LOC"
     echo "BUILD_OPTIONS       = $BUILD_OPTIONS"
 
-    if [[ "$VM_NAME" == *"-enb-usrp"* ]] || [[ "$VM_NAME" == *"-cppcheck"* ]] || [[ "$VM_NAME" == *"-phy-sim"* ]] || [[ "$VM_NAME" == *"-basic-sim"* ]] || [[ "$VM_NAME" == *"-flexran-rtc"* ]]
+    if [[ "$VM_NAME" == *"-enb-usrp"* ]] || [[ "$VM_NAME" == *"-cppcheck"* ]] || [[ "$VM_NAME" == *"-phy-sim"* ]] || [[ "$VM_NAME" == *"-basic-sim"* ]]
     then
         echo "This VM type is no longer supported in the pipeline framework"
         return
@@ -97,12 +97,7 @@ function build_on_vm {
     echo "############################################################"
     echo "Copying GIT repo into VM ($VM_NAME)"
     echo "############################################################"
-    if [[ "$VM_NAME" == *"-flexran-rtc"* ]]
-    then
-        scp -o StrictHostKeyChecking=no $JENKINS_WKSP/flexran/flexran.zip ubuntu@$VM_IP_ADDR:/home/ubuntu/localZip.zip
-    else
-        scp -o StrictHostKeyChecking=no $JENKINS_WKSP/localZip.zip ubuntu@$VM_IP_ADDR:/home/ubuntu
-    fi
+    scp -o StrictHostKeyChecking=no $JENKINS_WKSP/localZip.zip ubuntu@$VM_IP_ADDR:/home/ubuntu
     [ -f /etc/apt/apt.conf.d/01proxy ] && scp -o StrictHostKeyChecking=no /etc/apt/apt.conf.d/01proxy ubuntu@$VM_IP_ADDR:/home/ubuntu
 
     echo "############################################################"
@@ -124,20 +119,7 @@ function build_on_vm {
             echo "sudo apt-get --yes install zip daemon cppcheck >> zip-install.txt 2>&1" >> $VM_CMDS
         fi
     fi
-    if [[ "$VM_NAME" == *"-flexran-rtc"* ]]
-    then
-        if [ $DAEMON -eq 0 ]
-        then
-            echo "echo \"sudo apt-get --yes --quiet install zip curl jq \"" >> $VM_CMDS
-            echo "sudo apt-get update > zip-install.txt 2>&1" >> $VM_CMDS
-            echo "sudo apt-get --yes install zip curl jq >> zip-install.txt 2>&1" >> $VM_CMDS
-        else
-            echo "echo \"sudo apt-get --yes --quiet install zip daemon curl jq \"" >> $VM_CMDS
-            echo "sudo apt-get update > zip-install.txt 2>&1" >> $VM_CMDS
-            echo "sudo apt-get --yes install zip daemon curl jq >> zip-install.txt 2>&1" >> $VM_CMDS
-        fi
-    fi
-    if [[ "$VM_NAME" != *"-cppcheck"* ]] && [[ "$VM_NAME" != *"-flexran-rtc"* ]]
+    if [[ "$VM_NAME" != *"-cppcheck"* ]]
     then
         if [ $DAEMON -eq 0 ]
         then
@@ -182,23 +164,7 @@ function build_on_vm {
             echo "sudo -E daemon --inherit --unsafe --name=build_daemon --chdir=/home/ubuntu/tmp -O /home/ubuntu/tmp/cmake_targets/log/cppcheck_build.txt -E /home/ubuntu/tmp/cmake_targets/log/cppcheck.xml ./my-vm-build.sh" >> $VM_CMDS
         fi
     fi
-    if [[ "$VM_NAME" == *"-flexran-rtc"* ]]
-    then
-        echo "mkdir -p cmake_targets/log" >> $VM_CMDS
-        echo "chmod 777 cmake_targets/log" >> $VM_CMDS
-        echo "cp /home/ubuntu/zip-install.txt cmake_targets/log" >> $VM_CMDS
-        # Patching the pistache build for Xenial (cmake too old for new commits)
-        echo "sed -i -e 's@cd pistache@cd pistache \&\& git checkout -f 9a65f40975fafca5bb5370ba6d0d00f42cbc4356@' ./tools/install_dependencies" >> $VM_CMDS
-        echo "echo \"./tools/install_dependencies \"" >> $VM_CMDS
-        echo "./tools/install_dependencies > cmake_targets/log/install-build.txt 2>&1" >> $VM_CMDS
-        echo "echo \"mkdir build\"" >> $VM_CMDS
-        echo "mkdir build" >> $VM_CMDS
-        echo "echo \"cd build\"" >> $VM_CMDS
-        echo "cd build" >> $VM_CMDS
-        echo "echo \"$BUILD_OPTIONS \"" >> $VM_CMDS
-        echo "$BUILD_OPTIONS > ../cmake_targets/log/rt_controller.txt 2>&1" >> $VM_CMDS
-    fi
-    if [[ "$VM_NAME" != *"-cppcheck"* ]] && [[ "$VM_NAME" != *"-flexran-rtc"* ]]
+    if [[ "$VM_NAME" != *"-cppcheck"* ]]
     then
         echo "echo \"source oaienv\"" >> $VM_CMDS
         echo "source oaienv" >> $VM_CMDS

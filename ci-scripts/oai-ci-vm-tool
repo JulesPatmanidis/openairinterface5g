@@ -225,13 +225,6 @@ function variant__v8__ue_ethernet {
     BUILD_OPTIONS="--UE -w USRP --noavx512"
 }
 
-function variant__v10__flexran_rtc {
-    ARCHIVES_LOC=flexran
-    NB_PATTERN_FILES=1
-    BUILD_OPTIONS="cmake .. && make -j2"
-    VARIANT_INFO="non-OSA"
-}
-
 function variant__v20__l1_sim {
     ARCHIVES_LOC=l1_sim
     RUN_OPTIONS="complex"

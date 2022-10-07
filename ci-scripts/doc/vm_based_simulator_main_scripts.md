@@ -77,12 +77,6 @@ You can get the list of variant specific variables specifying the variant argume
 
 ``` bash
 ./ci-scripts/oai-ci-vm-tool help variant
-    --variant flexran-rtc     OR -v10    ( build and test non-OSA )
-               VM_NAME=ci-flexran-rtc           ARCHIVES_LOC=flexran        
-               VM_MEMORY=2048                   VM_CPU=4              
-               NB_PATTERN_FILES=1               BUILD_OPTIONS="cmake . && make -j2"
-               LOG_PATTERN=.txt
-
     --variant enb-usrp        OR -v1     ( build and test  )
                VM_NAME=ci-enb-usrp              ARCHIVES_LOC=enb_usrp       
                VM_MEMORY=2048                   VM_CPU=4              

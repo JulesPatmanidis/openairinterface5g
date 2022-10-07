@@ -49,8 +49,6 @@ Mandatory Options:
     --variant nr-ue-usrp      OR -v6     ( build and test  )
     --variant enb-ethernet    OR -v7     ( build and test  )
     --variant ue-ethernet     OR -v8     ( build and test  )
- # non-OSA Build Variants
-    --variant flexran-rtc     OR -v10    ( build and test non-OSA )
  # OpenAirInterface Test Variants
     --variant l1-sim          OR -v20    ( test  )
     --variant rf-sim          OR -v21    ( test  )

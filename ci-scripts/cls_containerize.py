@@ -188,8 +188,6 @@ class Containerize():
 
 		self.testCase_id = ''
 
-		self.flexranCtrlDeployed = False
-		self.flexranCtrlIpAddress = ''
 		self.cli = ''
 		self.cliBuildOptions = ''
 		self.dockerfileprefix = ''
@@ -773,12 +771,6 @@ class Containerize():
 			mySSH.command(f'sed -i -e "s#image: {image}:latest#image: {imageToUse}#" ci-docker-compose.yml', '\$', 2)
 		localMmeIpAddr = EPC.MmeIPAddress
 		mySSH.command('sed -i -e "s/CI_MME_IP_ADDR/' + localMmeIpAddr + '/" ci-docker-compose.yml', '\$', 2)
-#		if self.flexranCtrlDeployed:
-#			mySSH.command('sed -i -e "s/FLEXRAN_ENABLED:.*/FLEXRAN_ENABLED: \'yes\'/" ci-docker-compose.yml', '\$', 2)
-#			mySSH.command('sed -i -e "s/CI_FLEXRAN_CTL_IP_ADDR/' + self.flexranCtrlIpAddress + '/" ci-docker-compose.yml', '\$', 2)
-#		else:
-#			mySSH.command('sed -i -e "s/FLEXRAN_ENABLED:.*$/FLEXRAN_ENABLED: \'no\'/" ci-docker-compose.yml', '\$', 2)
-#			mySSH.command('sed -i -e "s/CI_FLEXRAN_CTL_IP_ADDR/127.0.0.1/" ci-docker-compose.yml', '\$', 2)
 		# Currently support only one
 		mySSH.command('echo ' + lPassWord + ' | sudo -S b2xx_fx3_utils --reset-device', '\$', 15)
 		mySSH.command('docker-compose --file ci-docker-compose.yml config --services | sed -e "s@^@service=@" 2>&1', '\$', 10)
