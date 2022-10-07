@@ -164,13 +164,13 @@ int DU_handle_DL_RRC_MESSAGE_TRANSFER(instance_t       instance,
   // decode RRC Container and act on the message type
   AssertFatal(srb_id<3,"illegal srb_id\n");
   protocol_ctxt_t ctxt;
-  ctxt.rnti      = f1ap_get_rnti_by_du_id(DUtype, instance, du_ue_f1ap_id);
+  ctxt.rntiMaybeUEid      = f1ap_get_rnti_by_du_id(DUtype, instance, du_ue_f1ap_id);
   ctxt.instance = instance;
   ctxt.module_id = instance;
   ctxt.enb_flag  = 1;
   struct rrc_eNB_ue_context_s *ue_context_p = rrc_eNB_get_ue_context(
         RC.rrc[ctxt.instance],
-        ctxt.rnti);
+        ctxt.rntiMaybeUEid);
 
   if (srb_id == 0) {
     LTE_DL_CCCH_Message_t *dl_ccch_msg=NULL;
@@ -261,7 +261,7 @@ int DU_handle_DL_RRC_MESSAGE_TRANSFER(instance_t       instance,
           ctxt.instance,
           0, //primaryCC_id,
           0,0,0,0,0,0,
-          ctxt.rnti,
+          ctxt.rntiMaybeUEid,
           (LTE_BCCH_BCH_Message_t *) NULL,
           (LTE_RadioResourceConfigCommonSIB_t *) NULL,
           (LTE_RadioResourceConfigCommonSIB_t *) NULL,
@@ -383,7 +383,7 @@ int DU_handle_DL_RRC_MESSAGE_TRANSFER(instance_t       instance,
                     MessageDef *message_p = NULL;
                     /* Send DRX configuration to MAC task to configure timers of local UE context */
                     message_p = itti_alloc_new_message(TASK_DU_F1, 0, RRC_MAC_DRX_CONFIG_REQ);
-                    RRC_MAC_DRX_CONFIG_REQ(message_p).rnti = ctxt.rnti;
+                    RRC_MAC_DRX_CONFIG_REQ(message_p).rnti = ctxt.rntiMaybeUEid;
                     RRC_MAC_DRX_CONFIG_REQ(message_p).drx_Configuration = mac_MainConfig->drx_Config;
                     itti_send_msg_to_task(TASK_MAC_ENB, ctxt.instance, message_p);
                     LOG_D(F1AP, "DRX configured in MAC Main Configuration for RRC Connection Reconfiguration\n");
@@ -423,7 +423,7 @@ int DU_handle_DL_RRC_MESSAGE_TRANSFER(instance_t       instance,
                       LOG_I(F1AP,
                             "[DU %ld] Logical Channel UL-DCCH, Received RRCConnectionReconfiguration for UE rnti %x, reconfiguring DRB %d/LCID %d\n",
                             ctxt.instance,
-                            ctxt.rnti,
+                            ctxt.rntiMaybeUEid,
                             (int)DRB_configList->list.array[i]->drb_Identity,
                             (int)*DRB_configList->list.array[i]->logicalChannelIdentity);
 

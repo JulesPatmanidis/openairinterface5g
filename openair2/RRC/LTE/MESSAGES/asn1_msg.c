@@ -3213,14 +3213,14 @@ uint8_t do_SecurityModeCommand(
 
   LOG_D(RRC,"[eNB %d] securityModeCommand for UE %x Encoded %zd bits (%zd bytes)\n",
         ctxt_pP->module_id,
-        ctxt_pP->rnti,
+        ctxt_pP->rntiMaybeUEid,
         enc_rval.encoded,
         (enc_rval.encoded+7)/8);
 
   if (enc_rval.encoded==-1) {
     LOG_E(RRC,"[eNB %d] ASN1 : securityModeCommand encoding failed for UE %x\n",
           ctxt_pP->module_id,
-          ctxt_pP->rnti);
+          ctxt_pP->rntiMaybeUEid);
     return(-1);
   }
 
@@ -3336,14 +3336,14 @@ uint8_t do_UECapabilityEnquiry( const protocol_ctxt_t *const ctxt_pP,
 
   LOG_D(RRC,"[eNB %d] UECapabilityRequest for UE %x Encoded %zd bits (%zd bytes)\n",
         ctxt_pP->module_id,
-        ctxt_pP->rnti,
+        ctxt_pP->rntiMaybeUEid,
         enc_rval.encoded,
         (enc_rval.encoded+7)/8);
 
   if (enc_rval.encoded==-1) {
     LOG_E(RRC,"[eNB %d] ASN1 : UECapabilityRequest encoding failed for UE %x\n",
           ctxt_pP->module_id,
-          ctxt_pP->rnti);
+          ctxt_pP->rntiMaybeUEid);
     return(-1);
   }
 
@@ -3457,14 +3457,14 @@ uint8_t do_NR_UECapabilityEnquiry( const protocol_ctxt_t *const ctxt_pP,
 
   LOG_D(RRC,"[eNB %d] NR UECapabilityRequest for UE %x Encoded %zd bits (%zd bytes)\n",
         ctxt_pP->module_id,
-        ctxt_pP->rnti,
+        ctxt_pP->rntiMaybeUEid,
         enc_rval.encoded,
         (enc_rval.encoded+7)/8);
 
   if (enc_rval.encoded==-1) {
     LOG_E(RRC,"[eNB %d] ASN1 : NR UECapabilityRequest encoding failed for UE %x\n",
           ctxt_pP->module_id,
-          ctxt_pP->rnti);
+          ctxt_pP->rntiMaybeUEid);
     return(-1);
   }
 

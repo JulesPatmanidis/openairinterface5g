@@ -1419,7 +1419,7 @@ int8_t nr_rrc_ue_decode_ccch( const protocol_ctxt_t *const ctxt_pP, const NR_SRB
 	       "[UE%d][RAPROC] Frame %d : Logical Channel DL-CCCH (SRB0), Received NR_RRCSetup RNTI %x\n",
 	       ctxt_pP->module_id,
 	       ctxt_pP->frame,
-	       ctxt_pP->rnti);
+	       ctxt_pP->rntiMaybeUEid);
 
 	 // Get configuration
 	 // Release T300 timer
@@ -1434,7 +1434,7 @@ int8_t nr_rrc_ue_decode_ccch( const protocol_ctxt_t *const ctxt_pP, const NR_SRB
 					     &dl_ccch_msg->message.choice.c1->choice.rrcSetup->criticalExtensions.choice.rrcSetup->radioBearerConfig);
 	 nr_rrc_set_state (ctxt_pP->module_id, RRC_STATE_CONNECTED_NR);
 	 nr_rrc_set_sub_state (ctxt_pP->module_id, RRC_SUB_STATE_CONNECTED_NR);
-	 NR_UE_rrc_inst[ctxt_pP->module_id].Info[gNB_index].rnti = ctxt_pP->rnti;
+	 NR_UE_rrc_inst[ctxt_pP->module_id].Info[gNB_index].rnti = ctxt_pP->rntiMaybeUEid;
 	 rrc_ue_generate_RRCSetupComplete(
 					  ctxt_pP,
 					  gNB_index,
@@ -1982,7 +1982,7 @@ nr_rrc_ue_establish_srb2(
                            NR_UE_rrc_inst[ctxt_pP->module_id].kgnb, &kRRCint);
 
      // Refresh SRBs
-     nr_pdcp_add_srbs(ctxt_pP->enb_flag, ctxt_pP->rnti,
+     nr_pdcp_add_srbs(ctxt_pP->enb_flag, ctxt_pP->rntiMaybeUEid,
                       radioBearerConfig->srb_ToAddModList,
                       NR_UE_rrc_inst[ctxt_pP->module_id].cipheringAlgorithm |
                       (NR_UE_rrc_inst[ctxt_pP->module_id].integrityProtAlgorithm << 4),
@@ -2080,7 +2080,7 @@ nr_rrc_ue_establish_srb2(
                           NR_UE_rrc_inst[ctxt_pP->module_id].kgnb, &kUPint);
 
        // Refresh DRBs
-     nr_pdcp_add_drbs(ctxt_pP->enb_flag, ctxt_pP->rnti,
+     nr_pdcp_add_drbs(ctxt_pP->enb_flag, ctxt_pP->rntiMaybeUEid,
                       radioBearerConfig->drb_ToAddModList,
                       NR_UE_rrc_inst[ctxt_pP->module_id].cipheringAlgorithm
                       | (NR_UE_rrc_inst[ctxt_pP->module_id].integrityProtAlgorithm << 4),
