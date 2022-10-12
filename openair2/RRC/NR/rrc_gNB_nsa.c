@@ -375,7 +375,7 @@ void rrc_add_nsa_user(gNB_RRC_INST *rrc,struct rrc_gNB_ue_context_s *ue_context_
 
   PROTOCOL_CTXT_SET_BY_MODULE_ID(&ctxt, rrc->module_id, GNB_FLAG_YES, ue_context_p->ue_id_rnti, 0, 0, rrc->module_id);
   LOG_W(RRC,
-        "Calling RRC PDCP/RLC ASN1 request functions for protocol context %p with module_id %d, rnti %x, frame %d, subframe %d eNB_index %d \n",
+        "Calling RRC PDCP/RLC ASN1 request functions for protocol context %p with module_id %d, rnti %lx, frame %d, subframe %d eNB_index %d \n",
         &ctxt,
         ctxt.module_id,
         ctxt.rntiMaybeUEid,
@@ -397,7 +397,7 @@ void rrc_add_nsa_user(gNB_RRC_INST *rrc,struct rrc_gNB_ue_context_s *ue_context_
                              (LTE_PMCH_InfoList_r9_t *) NULL,
                              ue_context_p->ue_context.secondaryCellGroup->rlc_BearerToAddModList);
 
-  LOG_D(RRC, "%s:%d: done RRC PDCP/RLC ASN1 request for UE rnti %x\n", __FUNCTION__, __LINE__, ctxt.rntiMaybeUEid);
+  LOG_D(RRC, "%s:%d: done RRC PDCP/RLC ASN1 request for UE rnti %lx\n", __FUNCTION__, __LINE__, ctxt.rntiMaybeUEid);
 }
 
 void rrc_remove_nsa_user(gNB_RRC_INST *rrc, int rnti) {

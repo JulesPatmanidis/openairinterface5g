@@ -99,7 +99,7 @@ bool gtpv_data_req(const protocol_ctxt_t*   const ctxt_pP,
     LOG_I(GTPU,"gtpv_data_req sdu_sizeP == 0");
     return false;
   }
-  LOG_D(GTPU,"gtpv_data_req ue rnti %x sdu_sizeP %d rb id %ld", ctxt_pP->rntiMaybeUEid, sdu_sizeP, rb_idP);
+  LOG_D(GTPU,"gtpv_data_req ue rnti %lx sdu_sizeP %d rb id %ld", ctxt_pP->rntiMaybeUEid, sdu_sizeP, rb_idP);
   MessageDef *message_p;
   // Uses a new buffer to avoid issue with PDCP buffer content that could be changed by PDCP (asynchronous message handling).
   uint8_t *message_buffer;

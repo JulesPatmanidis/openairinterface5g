@@ -215,7 +215,7 @@ typedef struct protocol_ctxt_s {
   module_id_t module_id;     /*!< \brief  Virtualized module identifier      */
   eNB_flag_t  enb_flag;      /*!< \brief  Flag to indicate eNB (1) or UE (0) */
   instance_t  instance;      /*!< \brief  ITTI or OTG module identifier      */
-  rnti_t      rntiMaybeUEid;
+  ue_id_t     rntiMaybeUEid;
   frame_t     frame;         /*!< \brief  LTE frame number.*/
   sub_frame_t subframe;      /*!< \brief  LTE sub frame number.*/
   eNB_index_t eNB_index;     /*!< \brief  valid for UE indicating the index of connected eNB(s)      */
@@ -270,7 +270,7 @@ typedef struct protocol_ctxt_s {
   (Ctxt_Pp)->subframe  = sUBfRAME; \
   PROTOCOL_CTXT_COMPUTE_MODULE_ID(Ctxt_Pp)
 
-#define PROTOCOL_CTXT_FMT "[FRAME %05u][%s][MOD %02d][RNTI %" PRIx16 "]"
+#define PROTOCOL_CTXT_FMT "[FRAME %05u][%s][MOD %02d][RNTI %" PRIx64 "]"
 #define PROTOCOL_CTXT_ARGS(CTXT_Pp) \
   (CTXT_Pp)->frame, \
   ((CTXT_Pp)->enb_flag == ENB_FLAG_YES) ? "eNB":" UE", \

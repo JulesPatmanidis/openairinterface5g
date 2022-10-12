@@ -263,13 +263,13 @@ int pdcp_fifo_read_input_sdus_fromtun (const protocol_ctxt_t *const  ctxt_pP) {
       h_rc = hashtable_get(pdcp_coll_p, key, (void **)&pdcp_p);
     }
 
-    LOG_D(PDCP, "PDCP_COLL_KEY_DEFAULT_DRB_VALUE(module_id=%d, rnti=%x, enb_flag=%d)\n",
+    LOG_D(PDCP, "PDCP_COLL_KEY_DEFAULT_DRB_VALUE(module_id=%d, rnti=%lx, enb_flag=%d)\n",
           ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag);
 
     if (h_rc == HASH_TABLE_OK) {
       LOG_D(PDCP, "[FRAME %5u][UE][NETLINK][IP->PDCP] INST %ld: Received socket with length %d on Rab %ld \n",
             ctxt.frame, ctxt.instance, len, rab_id);
-      LOG_D(PDCP, "[FRAME %5u][UE][IP][INSTANCE %ld][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %04x][RB %ld]\n",
+      LOG_D(PDCP, "[FRAME %5u][UE][IP][INSTANCE %ld][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %04lx][RB %ld]\n",
             ctxt.frame, ctxt.instance, rab_id, len, ctxt.module_id,
             ctxt.rntiMaybeUEid, rab_id);
 
@@ -288,7 +288,7 @@ int pdcp_fifo_read_input_sdus_fromtun (const protocol_ctxt_t *const  ctxt_pP) {
                    );
     } else {
       LOG_D(PDCP,
-            "[FRAME %5u][UE][IP][INSTANCE %ld][RB %ld][--- PDCP_DATA_REQ / %d Bytes ---X][PDCP][MOD %u][UE %04x][RB %ld] TUN NON INSTANCIATED INSTANCE key 0x%"PRIx64", DROPPED\n",
+            "[FRAME %5u][UE][IP][INSTANCE %ld][RB %ld][--- PDCP_DATA_REQ / %d Bytes ---X][PDCP][MOD %u][UE %04lx][RB %ld] TUN NON INSTANCIATED INSTANCE key 0x%"PRIx64", DROPPED\n",
             ctxt.frame, ctxt.instance, rab_id, len, ctxt.module_id,
             ctxt.rntiMaybeUEid, rab_id, key);
     }
@@ -331,13 +331,13 @@ int pdcp_fifo_read_input_mbms_sdus_fromtun (const protocol_ctxt_t *const  ctxt_p
      // LOG_W(PDCP,"h_rc %d %d\n",h_rc,rab_id);
     }
 
-    LOG_D(PDCP, "PDCP_COLL_KEY_DEFAULT_DRB_VALUE(module_id=%d, rnti=%x, enb_flag=%d)\n",
+    LOG_D(PDCP, "PDCP_COLL_KEY_DEFAULT_DRB_VALUE(module_id=%d, rnti=%lx, enb_flag=%d)\n",
           ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag);
 
     if (h_rc == HASH_TABLE_OK) {
       LOG_D(PDCP, "[FRAME %5u][UE][NETLINK][IP->PDCP] INST %ld: Received socket with length %d on Rab %ld \n",
             ctxt.frame, ctxt.instance, len, rab_id);
-      LOG_D(PDCP, "[FRAME %5u][UE][IP][INSTANCE %ld][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %04x][RB %ld]\n",
+      LOG_D(PDCP, "[FRAME %5u][UE][IP][INSTANCE %ld][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %04lx][RB %ld]\n",
             ctxt.frame, ctxt.instance, rab_id, len, ctxt.module_id,
             ctxt.rntiMaybeUEid, rab_id);
       pdcp_data_req(
@@ -360,7 +360,7 @@ int pdcp_fifo_read_input_mbms_sdus_fromtun (const protocol_ctxt_t *const  ctxt_p
       //             );
     } else {
       LOG_D(PDCP,
-            "[FRAME %5u][UE][IP][INSTANCE %ld][RB %ld][--- PDCP_DATA_REQ / %d Bytes ---X][PDCP][MOD %u][UE %04x][RB %ld] NON INSTANCIATED INSTANCE key 0x%"PRIx64", DROPPED\n",
+            "[FRAME %5u][UE][IP][INSTANCE %ld][RB %ld][--- PDCP_DATA_REQ / %d Bytes ---X][PDCP][MOD %u][UE %04lx][RB %ld] NON INSTANCIATED INSTANCE key 0x%"PRIx64", DROPPED\n",
             ctxt.frame, ctxt.instance, rab_id, len, ctxt.module_id,
             ctxt.rntiMaybeUEid, rab_id, key);
        //if (!UE_NAS_USE_TUN) {
@@ -448,14 +448,14 @@ int pdcp_fifo_read_input_sdus_fromnetlinksock (const protocol_ctxt_t *const  ctx
               h_rc = hashtable_get(pdcp_coll_p, key, (void **)&pdcp_p);
 
               if (h_rc == HASH_TABLE_OK) {
-                LOG_D(PDCP, "[FRAME %5u][eNB][NETLINK][IP->PDCP] INST %d: Received socket with length %d (nlmsg_len = %zu) on Rab %ld for rnti: %d \n",
+                LOG_D(PDCP, "[FRAME %5u][eNB][NETLINK][IP->PDCP] INST %d: Received socket with length %d (nlmsg_len = %zu) on Rab %ld for rnti: %ld \n",
                       ctxt.frame,
                       pdcp_read_header_g.inst,
                       len,
                       nas_nlh_rx->nlmsg_len-sizeof(struct nlmsghdr),
                       pdcp_read_header_g.rb_id,
                       ctxt.rntiMaybeUEid);
-                LOG_D(PDCP, "[FRAME %5u][eNB][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u]UE %u][RB %ld]\n",
+                LOG_D(PDCP, "[FRAME %5u][eNB][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u]UE %lu][RB %ld]\n",
                       ctxt_cpy.frame,
                       pdcp_read_header_g.inst,
                       pdcp_read_header_g.rb_id,
@@ -474,7 +474,7 @@ int pdcp_fifo_read_input_sdus_fromnetlinksock (const protocol_ctxt_t *const  ctx
                               ,NULL, NULL
                              );
               } else {
-                LOG_D(PDCP, "[FRAME %5u][eNB][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes ---X][PDCP][MOD %u][UE %u][RB %ld] NON INSTANCIATED INSTANCE, DROPPED\n",
+                LOG_D(PDCP, "[FRAME %5u][eNB][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes ---X][PDCP][MOD %u][UE %lu][RB %ld] NON INSTANCIATED INSTANCE, DROPPED\n",
                       ctxt.frame,
                       pdcp_read_header_g.inst,
                       pdcp_read_header_g.rb_id,
@@ -504,19 +504,19 @@ int pdcp_fifo_read_input_sdus_fromnetlinksock (const protocol_ctxt_t *const  ctx
 
             if (rab_id != 0) {
               if (rab_id == UE_IP_DEFAULT_RAB_ID) {
-                LOG_D(PDCP, "PDCP_COLL_KEY_DEFAULT_DRB_VALUE(module_id=%d, rnti=%x, enb_flag=%d)\n",
+                LOG_D(PDCP, "PDCP_COLL_KEY_DEFAULT_DRB_VALUE(module_id=%d, rnti=%lx, enb_flag=%d)\n",
                       ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag);
                 key = PDCP_COLL_KEY_DEFAULT_DRB_VALUE(ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag);
                 h_rc = hashtable_get(pdcp_coll_p, key, (void **)&pdcp_p);
-                LOG_D(PDCP,"request key %x : (%d,%x,%d,%ld)\n",
+                LOG_D(PDCP,"request key %x : (%d,%lx,%d,%ld)\n",
                       (uint8_t)key,ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag, rab_id);
               } else {
                 rab_id = rab_id % LTE_maxDRB;
-                LOG_D(PDCP, "PDCP_COLL_KEY_VALUE(module_id=%d, rnti=%x, enb_flag=%d, rab_id=%ld, SRB_FLAG=%d)\n",
+                LOG_D(PDCP, "PDCP_COLL_KEY_VALUE(module_id=%d, rnti=%lx, enb_flag=%d, rab_id=%ld, SRB_FLAG=%d)\n",
                       ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag, rab_id, SRB_FLAG_NO);
                 key = PDCP_COLL_KEY_VALUE(ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag, rab_id, SRB_FLAG_NO);
                 h_rc = hashtable_get(pdcp_coll_p, key, (void **)&pdcp_p);
-                LOG_D(PDCP,"request key %x : (%d,%x,%d,%ld)\n",
+                LOG_D(PDCP,"request key %x : (%d,%lx,%d,%ld)\n",
                       (uint8_t)key,ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag, rab_id);
               }
 
@@ -528,7 +528,7 @@ int pdcp_fifo_read_input_sdus_fromnetlinksock (const protocol_ctxt_t *const  ctx
                       len,
                       nas_nlh_rx->nlmsg_len-sizeof(struct nlmsghdr),
                       pdcp_read_header_g.rb_id);
-                LOG_D(PDCP, "[FRAME %5u][UE][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %u][RB %ld]\n",
+                LOG_D(PDCP, "[FRAME %5u][UE][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %lu][RB %ld]\n",
                       ctxt.frame,
                       pdcp_read_header_g.inst,
                       pdcp_read_header_g.rb_id,
@@ -550,7 +550,7 @@ int pdcp_fifo_read_input_sdus_fromnetlinksock (const protocol_ctxt_t *const  ctx
                 );
               } else { /* else of h_rc == HASH_TABLE_OK */
                 LOG_D(PDCP,
-                      "[FRAME %5u][UE][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes ---X][PDCP][MOD %u][UE %u][RB %ld] NON INSTANCIATED INSTANCE key 0x%"PRIx64", DROPPED\n",
+                      "[FRAME %5u][UE][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes ---X][PDCP][MOD %u][UE %lu][RB %ld] NON INSTANCIATED INSTANCE key 0x%"PRIx64", DROPPED\n",
                       ctxt.frame,
                       pdcp_read_header_g.inst,
                       pdcp_read_header_g.rb_id,
@@ -562,7 +562,7 @@ int pdcp_fifo_read_input_sdus_fromnetlinksock (const protocol_ctxt_t *const  ctx
               } /* h_rc != HASH_TABLE_OK */
             }  else {/* else of rab_id != 0 */
               LOG_D(PDCP, "Forcing send on DEFAULT_RAB_ID\n");
-              LOG_D(PDCP, "[FRAME %5u][eNB][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %u][RB DEFAULT_RAB_ID %u]\n",
+              LOG_D(PDCP, "[FRAME %5u][eNB][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %lu][RB DEFAULT_RAB_ID %u]\n",
                     ctxt.frame,
                     pdcp_read_header_g.inst,
                     pdcp_read_header_g.rb_id,
@@ -680,19 +680,19 @@ void pdcp_fifo_read_input_sdus_frompc5s (const protocol_ctxt_t *const  ctxt_pP) 
         if (!ctxt.enb_flag) {
           if (rab_id != 0) {
             if (rab_id == UE_IP_DEFAULT_RAB_ID) {
-              LOG_D(PDCP, "PDCP_COLL_KEY_DEFAULT_DRB_VALUE(module_id=%d, rnti=%x, enb_flag=%d)\n",
+              LOG_D(PDCP, "PDCP_COLL_KEY_DEFAULT_DRB_VALUE(module_id=%d, rnti=%lx, enb_flag=%d)\n",
                     ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag);
               key = PDCP_COLL_KEY_DEFAULT_DRB_VALUE(ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag);
               h_rc = hashtable_get(pdcp_coll_p, key, (void **)&pdcp_p);
-              LOG_D(PDCP,"request key %x : (%d,%x,%d,%ld)\n",
+              LOG_D(PDCP,"request key %x : (%d,%lx,%d,%ld)\n",
                     (uint8_t)key,ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag, rab_id);
             } else {
               rab_id = rab_id % LTE_maxDRB;
-              LOG_I(PDCP, "PDCP_COLL_KEY_VALUE(module_id=%d, rnti=%x, enb_flag=%d, rab_id=%ld, SRB_FLAG=%d)\n",
+              LOG_I(PDCP, "PDCP_COLL_KEY_VALUE(module_id=%d, rnti=%lx, enb_flag=%d, rab_id=%ld, SRB_FLAG=%d)\n",
                     ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag, rab_id, SRB_FLAG_NO);
               key = PDCP_COLL_KEY_VALUE(ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag, rab_id, SRB_FLAG_NO);
               h_rc = hashtable_get(pdcp_coll_p, key, (void **)&pdcp_p);
-              LOG_I(PDCP,"request key %x : (%d,%x,%d,%ld)\n",
+              LOG_I(PDCP,"request key %x : (%d,%lx,%d,%ld)\n",
                     (uint8_t)key,ctxt.module_id, ctxt.rntiMaybeUEid, ctxt.enb_flag, rab_id);
             }
 
@@ -703,7 +703,7 @@ void pdcp_fifo_read_input_sdus_frompc5s (const protocol_ctxt_t *const  ctxt_pP) 
                     pc5s_header->inst,
                     bytes_received,
                     pc5s_header->rb_id);
-              LOG_I(PDCP, "[FRAME %5u][UE][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %u][RB %ld]\n",
+              LOG_I(PDCP, "[FRAME %5u][UE][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %lu][RB %ld]\n",
                     ctxt.frame,
                     pc5s_header->inst,
                     pc5s_header->rb_id,
@@ -733,7 +733,7 @@ void pdcp_fifo_read_input_sdus_frompc5s (const protocol_ctxt_t *const  ctxt_pP) 
               pc5s_header->destinationL2Id=destinationL2Id;             
             } else { /* else of h_rc == HASH_TABLE_OK */
               LOG_D(PDCP,
-                    "[FRAME %5u][UE][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes ---X][PDCP][MOD %u][UE %u][RB %ld] NON INSTANCIATED INSTANCE key 0x%"PRIx64", DROPPED\n",
+                    "[FRAME %5u][UE][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes ---X][PDCP][MOD %u][UE %lu][RB %ld] NON INSTANCIATED INSTANCE key 0x%"PRIx64", DROPPED\n",
                     ctxt.frame,
                     pc5s_header->inst,
                     pc5s_header->rb_id,
@@ -745,7 +745,7 @@ void pdcp_fifo_read_input_sdus_frompc5s (const protocol_ctxt_t *const  ctxt_pP) 
             }
           }  else { /* else of if (rab_id == 0) */
             LOG_D(PDCP, "Forcing send on DEFAULT_RAB_ID\n");
-            LOG_D(PDCP, "[FRAME %5u][eNB][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %u][RB DEFAULT_RAB_ID %u]\n",
+            LOG_D(PDCP, "[FRAME %5u][eNB][IP][INSTANCE %u][RB %ld][--- PDCP_DATA_REQ / %d Bytes --->][PDCP][MOD %u][UE %lu][RB DEFAULT_RAB_ID %u]\n",
                   ctxt.frame,
                   pc5s_header->inst,
                   pc5s_header->rb_id,

@@ -1416,7 +1416,7 @@ int8_t nr_rrc_ue_decode_ccch( const protocol_ctxt_t *const ctxt_pP, const NR_SRB
 
        case NR_DL_CCCH_MessageType__c1_PR_rrcSetup:
 	 LOG_I(NR_RRC,
-	       "[UE%d][RAPROC] Frame %d : Logical Channel DL-CCCH (SRB0), Received NR_RRCSetup RNTI %x\n",
+	       "[UE%d][RAPROC] Frame %d : Logical Channel DL-CCCH (SRB0), Received NR_RRCSetup RNTI %lx\n",
 	       ctxt_pP->module_id,
 	       ctxt_pP->frame,
 	       ctxt_pP->rntiMaybeUEid);

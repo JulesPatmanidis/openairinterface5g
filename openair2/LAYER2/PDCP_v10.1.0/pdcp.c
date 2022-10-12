@@ -284,12 +284,12 @@ bool pdcp_data_req(protocol_ctxt_t  *ctxt_pP,
               sdu_buffer_sizeP, MAX_IP_PACKET_SIZE);
 
   if (modeP == PDCP_TRANSMISSION_MODE_TRANSPARENT) {
-    AssertError (rb_idP < NB_RB_MBMS_MAX, return false, "RB id is too high (%ld/%d) %u %u!\n", rb_idP, NB_RB_MBMS_MAX, ctxt_pP->module_id, ctxt_pP->rntiMaybeUEid);
+    AssertError (rb_idP < NB_RB_MBMS_MAX, return false, "RB id is too high (%ld/%d) %u %lu!\n", rb_idP, NB_RB_MBMS_MAX, ctxt_pP->module_id, ctxt_pP->rntiMaybeUEid);
   } else {
     if (srb_flagP) {
-      AssertError (rb_idP < 3, return false, "RB id is too high (%ld/%d) %u %u!\n", rb_idP, 3, ctxt_pP->module_id, ctxt_pP->rntiMaybeUEid);
+      AssertError (rb_idP < 3, return false, "RB id is too high (%ld/%d) %u %lu!\n", rb_idP, 3, ctxt_pP->module_id, ctxt_pP->rntiMaybeUEid);
     } else {
-      AssertError (rb_idP < LTE_maxDRB, return false, "RB id is too high (%ld/%d) %u %u!\n", rb_idP, LTE_maxDRB, ctxt_pP->module_id, ctxt_pP->rntiMaybeUEid);
+      AssertError (rb_idP < LTE_maxDRB, return false, "RB id is too high (%ld/%d) %u %lu!\n", rb_idP, LTE_maxDRB, ctxt_pP->module_id, ctxt_pP->rntiMaybeUEid);
     }
   }
 
@@ -489,7 +489,7 @@ bool pdcp_data_req(protocol_ctxt_t  *ctxt_pP,
                 "[MSG] PDCP DL %s PDU on rb_id %ld\n",(srb_flagP)? "CONTROL" : "DATA", rb_idP);
 
     if ((pdcp_pdu_p!=NULL) && (srb_flagP == 0) && (ctxt_pP->enb_flag == 1)) {
-      LOG_D(PDCP, "pdcp data req on drb %ld, size %d, rnti %x, node_type %d \n",
+      LOG_D(PDCP, "pdcp data req on drb %ld, size %d, rnti %lx, node_type %d \n",
             rb_idP, pdcp_pdu_size, ctxt_pP->rntiMaybeUEid, RC.rrc ? RC.rrc[ctxt_pP->module_id]->node_type: -1);
 
       if (ctxt_pP->enb_flag == ENB_FLAG_YES && NODE_IS_DU(RC.rrc[ctxt_pP->module_id]->node_type)) {
@@ -651,14 +651,14 @@ pdcp_data_ind(
 
   if (MBMS_flagP) {
     AssertError (rb_idP < NB_RB_MBMS_MAX, return false,
-                 "RB id is too high (%ld/%d) %u rnti %x!\n",
+                 "RB id is too high (%ld/%d) %u rnti %lx!\n",
                  rb_idP,
                  NB_RB_MBMS_MAX,
                  ctxt_pP->module_id,
                  ctxt_pP->rntiMaybeUEid);
 
     if (ctxt_pP->enb_flag == ENB_FLAG_NO) {
-      LOG_D(PDCP, "e-MBMS Data indication notification for PDCP entity from eNB %u to UE %x "
+      LOG_D(PDCP, "e-MBMS Data indication notification for PDCP entity from eNB %u to UE %lx "
             "and radio bearer ID %ld rlc sdu size %d ctxt_pP->enb_flag %d\n",
             ctxt_pP->module_id,
             ctxt_pP->rntiMaybeUEid,
@@ -666,7 +666,7 @@ pdcp_data_ind(
             sdu_buffer_sizeP,
             ctxt_pP->enb_flag);
     } else {
-      LOG_D(PDCP, "Data indication notification for PDCP entity from UE %x to eNB %u "
+      LOG_D(PDCP, "Data indication notification for PDCP entity from UE %lx to eNB %u "
             "and radio bearer ID %ld rlc sdu size %d ctxt_pP->enb_flag %d\n",
             ctxt_pP->rntiMaybeUEid,
             ctxt_pP->module_id,
@@ -676,12 +676,12 @@ pdcp_data_ind(
     }
   } else {
     rb_id = rb_idP % LTE_maxDRB;
-    AssertError (rb_id < LTE_maxDRB, return false, "RB id is too high (%ld/%d) %u UE %x!\n",
+    AssertError (rb_id < LTE_maxDRB, return false, "RB id is too high (%ld/%d) %u UE %lx!\n",
                  rb_id,
                  LTE_maxDRB,
                  ctxt_pP->module_id,
                  ctxt_pP->rntiMaybeUEid);
-    AssertError (rb_id > 0, return false, "RB id is too low (%ld/%d) %u UE %x!\n",
+    AssertError (rb_id > 0, return false, "RB id is too low (%ld/%d) %u UE %lx!\n",
                  rb_id,
                  LTE_maxDRB,
                  ctxt_pP->module_id,
@@ -1048,7 +1048,7 @@ pdcp_data_ind(
 
   if (LINK_ENB_PDCP_TO_GTPV1U) {
     if ((true == ctxt_pP->enb_flag) && (false == srb_flagP)) {
-      LOG_D(PDCP, "Sending packet to GTP, Calling GTPV1U_TUNNEL_DATA_REQ  ue %x rab %ld len %u\n",
+      LOG_D(PDCP, "Sending packet to GTP, Calling GTPV1U_TUNNEL_DATA_REQ  ue %lx rab %ld len %u\n",
             ctxt_pP->rntiMaybeUEid,
             rb_id + 4,
             sdu_buffer_sizeP - payload_offset );
@@ -1059,7 +1059,7 @@ pdcp_data_ind(
       gtpv1u_tunnel_data_req_t *req=&GTPV1U_TUNNEL_DATA_REQ(message_p);
       req->buffer       = (uint8_t*)(req+1);
       memcpy(req->buffer + GTPU_HEADER_OVERHEAD_MAX,
-             &sdu_buffer_pP->data[payload_offset],
+             sdu_buffer_pP->data + payload_offset,
              sdu_buffer_sizeP - payload_offset);
       req->length       = sdu_buffer_sizeP - payload_offset;
       req->offset       = GTPU_HEADER_OVERHEAD_MAX;
@@ -1534,7 +1534,7 @@ void pdcp_add_UE(const protocol_ctxt_t *const  ctxt_pP) {
         pdcp_enb[ctxt_pP->module_id].rnti[i]=ctxt_pP->rntiMaybeUEid;
         pdcp_enb[ctxt_pP->module_id].uid[i]=i;
         pdcp_enb[ctxt_pP->module_id].num_ues++;
-        LOG_I(PDCP,"add new uid is %d %x\n", i, ctxt_pP->rntiMaybeUEid);
+        LOG_I(PDCP,"add new uid is %d %lx\n", i, ctxt_pP->rntiMaybeUEid);
         pdcp_init_stats_UE(ctxt_pP->module_id, i);
         // ret=1;
         break;

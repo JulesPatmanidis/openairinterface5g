@@ -421,7 +421,7 @@ int DU_handle_DL_RRC_MESSAGE_TRANSFER(instance_t       instance,
                     if (DRB_configList->list.array[i]) {
                       drb_id = (int)DRB_configList->list.array[i]->drb_Identity;
                       LOG_I(F1AP,
-                            "[DU %ld] Logical Channel UL-DCCH, Received RRCConnectionReconfiguration for UE rnti %x, reconfiguring DRB %d/LCID %d\n",
+                            "[DU %ld] Logical Channel UL-DCCH, Received RRCConnectionReconfiguration for UE rnti %lx, reconfiguring DRB %d/LCID %d\n",
                             ctxt.instance,
                             ctxt.rntiMaybeUEid,
                             (int)DRB_configList->list.array[i]->drb_Identity,

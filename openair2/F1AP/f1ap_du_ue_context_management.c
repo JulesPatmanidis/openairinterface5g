@@ -851,7 +851,7 @@ int DU_handle_UE_CONTEXT_RELEASE_COMMAND(instance_t       instance,
   }
   else{
     AssertFatal(ctxt.rntiMaybeUEid == rnti,
-        "RNTI obtained through DU ID (%x) is different from CU ID (%x)\n",
+        "RNTI obtained through DU ID (%x) is different from CU ID (%lx)\n",
         rnti, ctxt.rntiMaybeUEid);
   }
   int UE_out_of_sync = 0;
@@ -961,11 +961,11 @@ int DU_handle_UE_CONTEXT_RELEASE_COMMAND(instance_t       instance,
             rrc_release_info.RRC_release_ctrl[release_num].flag = 2;
 
           rrc_release_info.RRC_release_ctrl[release_num].rnti = ctxt.rntiMaybeUEid;
-          LOG_D(F1AP, "add rrc_release_info RNTI %x\n", ctxt.rntiMaybeUEid);
+          LOG_D(F1AP, "add rrc_release_info RNTI %lx\n", ctxt.rntiMaybeUEid);
           // TODO: how to provide the correct MUI?
           rrc_release_info.RRC_release_ctrl[release_num].rrc_eNB_mui = 0;
           rrc_release_info.num_UEs++;
-          LOG_D(RRC,"Generate DLSCH Release send: index %d rnti %x mui %d flag %d \n",release_num,
+          LOG_D(RRC,"Generate DLSCH Release send: index %d rnti %lx mui %d flag %d \n",release_num,
                 ctxt.rntiMaybeUEid, 0, rrc_release_info.RRC_release_ctrl[release_num].flag);
           break;
         }

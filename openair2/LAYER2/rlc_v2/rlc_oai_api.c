@@ -979,7 +979,7 @@ rlc_op_status_t rrc_rlc_config_req   (
     exit(1);
   }
   rlc_manager_lock(rlc_ue_manager);
-  LOG_D(RLC, "%s:%d:%s: remove rb %d (is_srb %d) for UE %d\n", __FILE__, __LINE__, __FUNCTION__, (int)rb_idP, srb_flagP, ctxt_pP->rntiMaybeUEid);
+  LOG_D(RLC, "%s:%d:%s: remove rb %d (is_srb %d) for UE %ld\n", __FILE__, __LINE__, __FUNCTION__, (int)rb_idP, srb_flagP, ctxt_pP->rntiMaybeUEid);
   ue = rlc_manager_get_ue(rlc_ue_manager, ctxt_pP->rntiMaybeUEid);
   if (srb_flagP) {
     if (ue->srb[rb_idP-1] != NULL) {
@@ -1016,7 +1016,7 @@ void rrc_rlc_register_rrc (rrc_data_ind_cb_t rrc_data_indP, rrc_data_conf_cb_t r
 
 rlc_op_status_t rrc_rlc_remove_ue (const protocol_ctxt_t* const x)
 {
-  LOG_D(RLC, "%s:%d:%s: remove UE %d\n", __FILE__, __LINE__, __FUNCTION__, x->rntiMaybeUEid);
+  LOG_D(RLC, "%s:%d:%s: remove UE %ld\n", __FILE__, __LINE__, __FUNCTION__, x->rntiMaybeUEid);
   rlc_manager_lock(rlc_ue_manager);
   rlc_manager_remove_ue(rlc_ue_manager, x->rntiMaybeUEid);
   rlc_manager_unlock(rlc_ue_manager);

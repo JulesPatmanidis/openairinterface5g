@@ -2019,7 +2019,7 @@ rrc_eNB_generate_RRCConnectionReestablishmentReject(
       RC.mac[ctxt_pP->module_id]->UE_info.UE_sched_ctrl[UE_id].ue_reestablishment_reject_timer_thres = 20;
     } else {
       LOG_E(RRC,
-            PROTOCOL_RRC_CTXT_UE_FMT" Generating LTE_RRCConnectionReestablishmentReject without UE_id(MAC) rnti %x\n",
+            PROTOCOL_RRC_CTXT_UE_FMT" Generating LTE_RRCConnectionReestablishmentReject without UE_id(MAC) rnti %lx\n",
             PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),ctxt_pP->rntiMaybeUEid);
     }
   }
@@ -2114,7 +2114,7 @@ rrc_eNB_generate_RRCConnectionRelease(
       rrc_release_info.RRC_release_ctrl[release_num].rnti = ctxt_pP->rntiMaybeUEid;
       rrc_release_info.RRC_release_ctrl[release_num].rrc_eNB_mui = rrc_eNB_mui;
       rrc_release_info.num_UEs++;
-      LOG_D(RRC, "Generate DLSCH Release send: index %d rnti %x mui %d flag %d \n",
+      LOG_D(RRC, "Generate DLSCH Release send: index %d rnti %lx mui %d flag %d \n",
             release_num,
             ctxt_pP->rntiMaybeUEid,
             rrc_eNB_mui,
@@ -4384,9 +4384,9 @@ rrc_eNB_process_MeasurementReport(
 
     ue_context_pP->ue_context.measResults->measResultPCell.rsrpResult=measResults2->measResultPCell.rsrpResult;
     ue_context_pP->ue_context.measResults->measResultPCell.rsrqResult=measResults2->measResultPCell.rsrqResult;
-    LOG_D(RRC, "[eNB %d]Frame %d: UE %x (Measurement Id %d): RSRP of Source %ld\n", ctxt_pP->module_id, ctxt_pP->frame, ctxt_pP->rntiMaybeUEid, (int)measResults2->measId,
+    LOG_D(RRC, "[eNB %d]Frame %d: UE %lx (Measurement Id %d): RSRP of Source %ld\n", ctxt_pP->module_id, ctxt_pP->frame, ctxt_pP->rntiMaybeUEid, (int)measResults2->measId,
           ue_context_pP->ue_context.measResults->measResultPCell.rsrpResult-140);
-    LOG_D(RRC, "[eNB %d]Frame %d: UE %x (Measurement Id %d): RSRQ of Source %ld\n", ctxt_pP->module_id, ctxt_pP->frame, ctxt_pP->rntiMaybeUEid, (int)measResults2->measId,
+    LOG_D(RRC, "[eNB %d]Frame %d: UE %lx (Measurement Id %d): RSRQ of Source %ld\n", ctxt_pP->module_id, ctxt_pP->frame, ctxt_pP->rntiMaybeUEid, (int)measResults2->measId,
           ue_context_pP->ue_context.measResults->measResultPCell.rsrqResult/2 - 20);
   }
 
@@ -4438,7 +4438,7 @@ rrc_eNB_process_MeasurementReport(
         }
 
         LOG_A(RRC,
-              "[eNB %d] frame %d subframe %d: UE rnti %x switching to NSA mode\n",
+              "[eNB %d] frame %d subframe %d: UE rnti %lx switching to NSA mode\n",
               ctxt_pP->module_id, ctxt_pP->frame, ctxt_pP->subframe, ctxt_pP->rntiMaybeUEid);
         itti_send_msg_to_task(TASK_X2AP, ENB_MODULE_ID_TO_INSTANCE(ctxt_pP->module_id), msg);
         return;
@@ -4590,7 +4590,7 @@ rrc_eNB_process_MeasurementReport(
           ctxt_pP->module_id, ctxt_pP->frame);
     itti_send_msg_to_task(TASK_X2AP, ENB_MODULE_ID_TO_INSTANCE(ctxt_pP->module_id), msg);
   } else {
-    LOG_D(RRC, "[eNB %d] Frame %d: Ignoring MeasReport from UE %x as Handover is in progress... \n", ctxt_pP->module_id, ctxt_pP->frame,
+    LOG_D(RRC, "[eNB %d] Frame %d: Ignoring MeasReport from UE %lx as Handover is in progress... \n", ctxt_pP->module_id, ctxt_pP->frame,
           ctxt_pP->rntiMaybeUEid);
   }
 }
@@ -4916,7 +4916,7 @@ flexran_rrc_eNB_trigger_handover (int mod_id,
           ctxt_pP->module_id, ctxt_pP->frame);
     itti_send_msg_to_task(TASK_X2AP, ENB_MODULE_ID_TO_INSTANCE(ctxt_pP->module_id), msg);
   } else {
-    LOG_D(RRC, "[eNB %d] Frame %d: Ignoring MeasReport from UE %x as Handover is in progress... \n", ctxt_pP->module_id, ctxt_pP->frame,
+    LOG_D(RRC, "[eNB %d] Frame %d: Ignoring MeasReport from UE %lx as Handover is in progress... \n", ctxt_pP->module_id, ctxt_pP->frame,
           ctxt_pP->rntiMaybeUEid);
   }
 
@@ -4937,7 +4937,7 @@ check_handovers(
       /* in the source, UE in HO_PREPARE mode */
       if (ue_context_p->ue_context.handover_info->state == HO_PREPARE) {
         LOG_D(RRC,
-              "[eNB %d] Frame %d: Incoming handover detected for new UE_id %x) \n",
+              "[eNB %d] Frame %d: Incoming handover detected for new UE_id %lx) \n",
               ctxt_pP->module_id,
               ctxt_pP->frame,
               ctxt_pP->rntiMaybeUEid);
@@ -6219,7 +6219,7 @@ rrc_eNB_configure_rbs_handover(struct rrc_eNB_ue_context_s *ue_context_p, protoc
   }
 
   // Add a new user (called during the HO procedure)
-  LOG_I(RRC, "rrc_eNB_target_add_ue_handover module_id %d rnti %d\n", ctxt_pP->module_id, ctxt_pP->rntiMaybeUEid);
+  LOG_I(RRC, "rrc_eNB_target_add_ue_handover module_id %d rnti %lx\n", ctxt_pP->module_id, ctxt_pP->rntiMaybeUEid);
   // Configure MAC for the target
   rrc_mac_config_req_eNB(
     ctxt_pP->module_id,
@@ -6374,7 +6374,7 @@ rrc_eNB_process_RRCConnectionReconfigurationComplete(
     for (int i = 0; i < DRB_configList->list.count; i++) {  // num max DRB (11-3-8)
       if (DRB_configList->list.array[i]) {
         drb_id = (int)DRB_configList->list.array[i]->drb_Identity;
-        LOG_I(RRC, "[eNB %d] Frame  %d : Logical Channel UL-DCCH, Received LTE_RRCConnectionReconfigurationComplete from UE rnti %x, reconfiguring DRB %d/LCID %d\n",
+        LOG_I(RRC, "[eNB %d] Frame  %d : Logical Channel UL-DCCH, Received LTE_RRCConnectionReconfigurationComplete from UE rnti %lx, reconfiguring DRB %d/LCID %d\n",
               ctxt_pP->module_id,
               ctxt_pP->frame,
               ctxt_pP->rntiMaybeUEid,
@@ -7158,7 +7158,7 @@ rrc_eNB_decode_ccch(
                * the current one must be removed from MAC/PHY (zombie UE)
                */
               if ((ue_context_p = rrc_eNB_ue_context_random_exist(ctxt_pP, random_value))) {
-                LOG_W(RRC, "new UE rnti %x (coming with random value) is already there as UE %x, removing %x from MAC/PHY\n",
+                LOG_W(RRC, "new UE rnti %lx (coming with random value) is already there as UE %x, removing %x from MAC/PHY\n",
                       ctxt_pP->rntiMaybeUEid, ue_context_p->ue_context.rnti, ue_context_p->ue_context.rnti);
                 ue_context_p->ue_context.ul_failure_timer = 20000;
               }
@@ -7178,7 +7178,7 @@ rrc_eNB_decode_ccch(
               random_value = (((uint64_t)mme_code) << 32) | m_tmsi;
 
               if ((ue_context_p = rrc_eNB_ue_context_stmsi_exist(ctxt_pP, mme_code, m_tmsi))) {
-                LOG_I(RRC," S-TMSI exists, ue_context_p %p, old rnti %x => %x\n",ue_context_p,ue_context_p->ue_context.rnti,ctxt_pP->rntiMaybeUEid);
+                LOG_I(RRC," S-TMSI exists, ue_context_p %p, old rnti %x => %lx\n",ue_context_p,ue_context_p->ue_context.rnti,ctxt_pP->rntiMaybeUEid);
 
                 if (!NODE_IS_CU(RC.rrc[ctxt_pP->module_id]->node_type)) {
 		  LOG_I(PHY, "remove RNTI %04x\n", ue_context_p->ue_context.rnti);
@@ -7661,7 +7661,7 @@ rrc_eNB_decode_dcch(
 
         // to avoid segmentation fault
         if(!ue_context_p) {
-          LOG_I(RRC, "Processing measurementReport UE %x, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
+          LOG_I(RRC, "Processing measurementReport UE %lx, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
           break;
         }
 
@@ -7682,7 +7682,7 @@ rrc_eNB_decode_dcch(
 
         // to avoid segmentation fault
         if(!ue_context_p) {
-          LOG_I(RRC, "Processing LTE_RRCConnectionReconfigurationComplete UE %x, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
+          LOG_I(RRC, "Processing LTE_RRCConnectionReconfigurationComplete UE %lx, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
           break;
         }
 
@@ -7713,7 +7713,7 @@ rrc_eNB_decode_dcch(
 
               if(UE_id == -1) {
                 LOG_E(RRC,
-                      PROTOCOL_RRC_CTXT_UE_FMT" RRCConnectionReconfigurationComplete without rnti %x, fault\n",
+                      PROTOCOL_RRC_CTXT_UE_FMT" RRCConnectionReconfigurationComplete without rnti %lx, fault\n",
                       PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),ctxt_pP->rntiMaybeUEid);
                 break;
               }
@@ -7733,7 +7733,7 @@ rrc_eNB_decode_dcch(
 
               if(UE_id == -1) {
                 LOG_E(RRC,
-                      PROTOCOL_RRC_CTXT_UE_FMT" RRCConnectionReconfigurationComplete without rnti %x, fault\n",
+                      PROTOCOL_RRC_CTXT_UE_FMT" RRCConnectionReconfigurationComplete without rnti %lx, fault\n",
                       PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),ctxt_pP->rntiMaybeUEid);
                 break;
               }
@@ -7936,7 +7936,7 @@ rrc_eNB_decode_dcch(
 
           if(UE_id == -1) {
             LOG_E(RRC,
-                  PROTOCOL_RRC_CTXT_UE_FMT" LTE_RRCConnectionReestablishmentComplete without UE_id(MAC) rnti %x, fault\n",
+                  PROTOCOL_RRC_CTXT_UE_FMT" LTE_RRCConnectionReestablishmentComplete without UE_id(MAC) rnti %lx, fault\n",
                   PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),ctxt_pP->rntiMaybeUEid);
             break;
           }
@@ -7969,7 +7969,7 @@ rrc_eNB_decode_dcch(
 
         // to avoid segmentation fault
         if(!ue_context_p) {
-          LOG_I(RRC, "Processing LTE_RRCConnectionSetupComplete UE %x, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
+          LOG_I(RRC, "Processing LTE_RRCConnectionSetupComplete UE %lx, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
           break;
         }
 
@@ -8014,7 +8014,7 @@ rrc_eNB_decode_dcch(
 
         // to avoid segmentation fault
         if(!ue_context_p) {
-          LOG_I(RRC, "Processing securityModeComplete UE %x, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
+          LOG_I(RRC, "Processing securityModeComplete UE %lx, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
           break;
         }
 
@@ -8071,7 +8071,7 @@ rrc_eNB_decode_dcch(
 
         // to avoid segmentation fault
         if(!ue_context_p) {
-          LOG_I(RRC, "Processing ueCapabilityInformation UE %x, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
+          LOG_I(RRC, "Processing ueCapabilityInformation UE %lx, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
           break;
         }
 
@@ -8092,13 +8092,13 @@ rrc_eNB_decode_dcch(
           xer_fprint(stdout, &asn_DEF_LTE_UL_DCCH_Message, (void *)ul_dcch_msg);
         }
 
-        LOG_A(RRC, "got UE capabilities for UE %x\n", ctxt_pP->rntiMaybeUEid);
+        LOG_A(RRC, "got UE capabilities for UE %lx\n", ctxt_pP->rntiMaybeUEid);
         int eutra_index = -1;
 
         for (i = 0; i < ul_dcch_msg->message.choice.c1.choice.ueCapabilityInformation.criticalExtensions.choice.c1.choice.ueCapabilityInformation_r8.ue_CapabilityRAT_ContainerList.list.count; i++) {
           if (ul_dcch_msg->message.choice.c1.choice.ueCapabilityInformation.criticalExtensions.choice.c1.choice.ueCapabilityInformation_r8.ue_CapabilityRAT_ContainerList.list.array[i]->rat_Type ==
               LTE_RAT_Type_nr) {
-              LOG_A(RRC, "got nrUE capabilities for UE %x\n", ctxt_pP->rntiMaybeUEid);
+              LOG_A(RRC, "got nrUE capabilities for UE %lx\n", ctxt_pP->rntiMaybeUEid);
             if(ue_context_p->ue_context.UE_Capability_nr) {
               ASN_STRUCT_FREE(asn_DEF_NR_UE_NR_Capability,ue_context_p->ue_context.UE_Capability_nr);
               ue_context_p->ue_context.UE_Capability_nr = 0;
@@ -8173,7 +8173,7 @@ rrc_eNB_decode_dcch(
           break;
 
         if (ue_context_p->ue_context.UE_Capability) {
-          LOG_I(RRC, "freeing old UE capabilities for UE %x\n", ctxt_pP->rntiMaybeUEid);
+          LOG_I(RRC, "freeing old UE capabilities for UE %lx\n", ctxt_pP->rntiMaybeUEid);
           ASN_STRUCT_FREE(asn_DEF_LTE_UE_EUTRA_Capability,
                           ue_context_p->ue_context.UE_Capability);
           ue_context_p->ue_context.UE_Capability = 0;
@@ -8247,7 +8247,7 @@ rrc_eNB_decode_dcch(
 
         // to avoid segmentation fault
         if(!ue_context_p) {
-          LOG_I(RRC, "Processing ulInformationTransfer UE %x, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
+          LOG_I(RRC, "Processing ulInformationTransfer UE %lx, ue_context_p is NULL\n", ctxt_pP->rntiMaybeUEid);
           break;
         }
 

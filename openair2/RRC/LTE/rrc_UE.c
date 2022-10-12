@@ -647,7 +647,7 @@ int rrc_ue_decode_ccch( const protocol_ctxt_t *const ctxt_pP, const SRB_INFO *co
 
         case LTE_DL_CCCH_MessageType__c1_PR_rrcConnectionSetup:
           LOG_A(RRC,
-                "[UE%d][RAPROC] Frame %d : Logical Channel DL-CCCH (SRB0), Received RRCConnectionSetup RNTI %x\n",
+                "[UE%d][RAPROC] Frame %d : Logical Channel DL-CCCH (SRB0), Received RRCConnectionSetup RNTI %lx\n",
                 ctxt_pP->module_id,
                 ctxt_pP->frame,
                 ctxt_pP->rntiMaybeUEid);
