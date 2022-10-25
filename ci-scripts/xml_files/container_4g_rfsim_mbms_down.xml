@@ -21,18 +21,25 @@
 
 -->
 <testCaseList>
-        <htmlTabRef>rfsim-4glte-fdd05mhz-nos1-down</htmlTabRef>
+        <htmlTabRef>rfsim-4glte-mbms-down</htmlTabRef>
         <htmlTabName>CleanUp 4G RF</htmlTabName>
         <htmlTabIcon>trash</htmlTabIcon>
         <TestCaseRequestedList>
  100011
+ 222222
         </TestCaseRequestedList>
         <TestCaseExclusionList></TestCaseExclusionList>
 
         <testCase id="100011">
                 <class>UndeployGenObject</class>
                 <desc>Undeploy all OAI 4G stack</desc>
-                <yaml_path>yaml_files/4g_rfsimulator_fdd_05MHz_noS1</yaml_path>
+                <yaml_path>yaml_files/4g_rfsimulator_mbms</yaml_path>
+        </testCase>
+
+        <testCase id="222222">
+                <class>Clean_Test_Server_Images</class>
+                <desc>Clean Test Images on Test Server</desc>
+                <test_svr_id>0</test_svr_id>
         </testCase>
 
 </testCaseList>
