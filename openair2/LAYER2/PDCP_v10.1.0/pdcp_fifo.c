@@ -229,7 +229,7 @@ int pdcp_fifo_read_input_sdus_fromtun (const protocol_ctxt_t *const  ctxt_pP) {
     VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME( VCD_SIGNAL_DUMPER_FUNCTIONS_PDCP_FIFO_READ_BUFFER, 0 );
     if (len == -1) {
       if (errno == EAGAIN) {
-        LOG_D(PDCP, "Error reading NAS socket: %s\n", strerror(errno));
+        //LOG_D(PDCP, "Error reading NAS socket: %s\n", strerror(errno));
       }
       else {
         LOG_E(PDCP, "Error reading NAS socket: %s\n", strerror(errno));
@@ -317,7 +317,10 @@ int pdcp_fifo_read_input_mbms_sdus_fromtun (const protocol_ctxt_t *const  ctxt_p
     len = read(nas_sock_mbms_fd, &nl_rx_buf, NL_MAX_PAYLOAD);
     VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME( VCD_SIGNAL_DUMPER_FUNCTIONS_PDCP_MBMS_FIFO_READ_BUFFER, 0 );
 
-    if (len<=0) continue;
+    if (len<=0) {
+      LOG_W(PDCP, "could not read fd %d: %d %s\n", nas_sock_mbms_fd, errno, strerror(errno));
+      continue;
+    }
 
     if (UE_NAS_USE_TUN) {
       //key = PDCP_COLL_KEY_DEFAULT_DRB_VALUE(ctxt.module_id, ctxt.rnti, ctxt.enb_flag);
