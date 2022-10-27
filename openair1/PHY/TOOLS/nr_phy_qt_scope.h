@@ -88,6 +88,38 @@ private:
 
 };
 
+// dialog box to set certain KPI configurations at the gNB side
+class configBoxgNB : public QLineEdit
+{
+    Q_OBJECT
+
+public:
+    explicit configBoxgNB(QWidget *parent = 0, int configIdx = 10);
+    ~configBoxgNB();
+    QTimer *timer;
+
+public slots:
+    void readText();
+private:
+    int configIdx;
+};
+
+// dialog box to set certain KPI configurations at the UE side 
+class configBoxgUE : public QLineEdit
+{
+    Q_OBJECT
+
+public:
+    explicit configBoxgUE(QWidget *parent = 0, int configIdx = 10);
+    ~configBoxgUE();
+    QTimer *timer;
+
+public slots:
+    void readText();
+private:
+    int configIdx;
+};
+
 
 // Paint first on a pixmap, then on the widget. Previous paint is erased
 class PainterWidget : public QWidget
@@ -99,14 +131,21 @@ public:
     void makeConnections();
     void resetKPIPlot(KPI_elements *inputStruct);
     void resetKPIValues(KPI_elements *inputStruct);
+    void createScatterPlot(float *xData, float *yData, int len, QColor MarkerColor, const QString xLabel, 
+                           const QString yLabel, bool scaleX);
+
+    void KPI_configurations();
     QPixmap *pix;
     QTimer *timer;
     int chartHight, chartWidth;
     QComboBox *parentWindow;
+    QChartView *chartView;
+    QChart *chart;
+    QValueAxis *axisX;
+    QValueAxis *axisY;
 
     QTimer *timerWaterFallTime;
-
-
+    bool isOpenGLUsed;
     // for waterfill graphs
     int waterFallh;
     int iteration;
@@ -147,6 +186,7 @@ public slots:
     void KPI_DL_MCS();
     void KPI_DL_Throu();
     void KPI_Nof_RBs();
+    void KPI_FreqOff_TimeAdv();
 
 private:
 	PHY_VARS_NR_UE *ue;
@@ -163,17 +203,31 @@ class PainterWidgetgNB : public QWidget
 public:
     PainterWidgetgNB(QComboBox *parent, scopeData_t *p);
     void makeConnections();
-    void createPixMap(float *xData, float *yData, int len, QColor MarkerColor, const QString xLabel, const QString yLabel, bool scaleX);
+    void createPixMap(float *xData, float *yData, int len, QColor MarkerColor, const QString xLabel,
+                      const QString yLabel, bool scaleX);
     void resetKPIPlot(KPI_elements *inputStruct);
     void resetKPIValues(KPI_elements *inputStruct);
+    void KPI_configurations();
 
     QPixmap *pix;
     QTimer *timer;
     QTimer *timerRetrans;
     int chartHight, chartWidth;
     int nb_UEs;
+    bool isOpenGLUsed;
+
+    // for waterfill graphs
+    int waterFallh;
+    int iteration;
+    double *waterFallAvg;
+
+    uint64_t current_instance;
 
     QComboBox *parentWindow;
+    QChartView *chartView;
+    QChart *chart;
+    QValueAxis *axisX;
+    QValueAxis *axisY;
 
     KPI_elements ULBLER;
     KPI_elements ULMCS;
@@ -207,6 +261,7 @@ public slots:
     void KPI_DL_SNR();
     void KPI_UL_Retrans();
     void KPI_DL_Retrans();
+    void KPI_waterFall();
 
 private:
     scopeData_t *p;

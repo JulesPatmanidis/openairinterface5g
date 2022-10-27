@@ -11,6 +11,12 @@
 #include <QtCharts>
 #include <qchart.h>
 #include <QValueAxis>
+#include <stdio.h>
+#include <dirent.h>
+#include<QLineEdit>
+#include<QFormLayout>
+#include<QIntValidator>
+#include<stdlib.h>
 
 extern "C" {
 #include "PHY/CODING/nrPolar_tools/nr_polar_defs.h"
@@ -21,14 +27,14 @@ typedef struct complex16 scopeSample_t;
 #define ScaleZone 4;
 #define SquaredNorm(VaR) ((VaR).r*(VaR).r+(VaR).i*(VaR).i)
 
-const float Limits_KPI_gNB[4][2]={ // {lower Limit, Upper Limit}
+float Limits_KPI_gNB[4][2]={ // {lower Limit, Upper Limit}
   {0.02, 0.8},    // UL BLER
   {0.2, 10},      // UL Throughput in Mbs
   {0.02, 0.8},    // DL BLER
   {0.2, 10}       // DL Throughput in Mbs
 };
 
-const float Limits_KPI_ue[2][2]={ // {lower Limit, Upper Limit}
+float Limits_KPI_ue[2][2]={ // {lower Limit, Upper Limit}
   {0.02, 0.8},    // DL BLER
   {0.2, 10}       // Throughput in Mbs
 };
@@ -54,6 +60,8 @@ KPIListSelect::KPIListSelect(QWidget *parent) : QComboBox(parent)
   this->addItem("Throughput", 9);
   this->addItem("DL MCS", 10);
   this->addItem("Nof Sched. RBs", 11);
+  this->addItem("Freq. Offset/Time Adv.", 12);
+  this->addItem("Configs", 13);
 }
 KPIListSelect::~KPIListSelect()
 {
@@ -75,9 +83,103 @@ KPIListSelectgNB::KPIListSelectgNB(QWidget *parent) : QComboBox(parent)
   this->addItem("DL SNR (CQI)", 11);
   this->addItem("UL Retrans.", 12);
   this->addItem("DL Retrans.", 13);
+  this->addItem("Configs", 14);
+  this->addItem("RX Signal-Time", 15);
 }
 KPIListSelectgNB::~KPIListSelectgNB()
 {
+}
+
+configBoxgNB::~configBoxgNB()
+{
+}
+
+configBoxgNB::configBoxgNB(QWidget *parent, int configIdx) : QLineEdit(parent)
+{
+  timer = new QTimer(this);
+  connect(timer, &QTimer::timeout, this, &configBoxgNB::readText);
+  timer->start(5000);
+
+  this->configIdx = configIdx;
+  this->setText("-10");
+}
+
+void configBoxgNB::readText()
+{
+  QString text_e1 = this->text();
+  QByteArray ba = text_e1.toLocal8Bit();
+  char *c_str2 = ba.data();
+
+  if (this->configIdx == 0)
+  {
+    Limits_KPI_gNB[0][0] =  atof(c_str2);
+  }
+  else if (this->configIdx == 1)
+  {
+    Limits_KPI_gNB[0][1] = atof(c_str2);
+  }
+  else if (this->configIdx == 2)
+  {
+    Limits_KPI_gNB[1][0] = atof(c_str2);
+  }
+  else if (this->configIdx == 3)
+  {
+    Limits_KPI_gNB[1][1] = atof(c_str2);
+  }
+  else if (this->configIdx == 4)
+  {
+    Limits_KPI_gNB[2][0] =  atof(c_str2);
+  }
+  else if (this->configIdx == 5)
+  {
+    Limits_KPI_gNB[2][1] = atof(c_str2);
+  }
+  else if (this->configIdx == 6)
+  {
+    Limits_KPI_gNB[3][0] = atof(c_str2);
+  }
+  else if (this->configIdx == 7)
+  {
+    Limits_KPI_gNB[3][1] = atof(c_str2);
+  }
+}
+
+configBoxgUE::~configBoxgUE()
+{
+}
+
+configBoxgUE::configBoxgUE(QWidget *parent, int configIdx) : QLineEdit(parent)
+{
+  timer = new QTimer(this);
+  connect(timer, &QTimer::timeout, this, &configBoxgUE::readText);
+  timer->start(5000);
+
+  this->configIdx = configIdx;
+  this->setText("-10");
+}
+
+void configBoxgUE::readText()
+{
+  QString text_e1 = this->text();
+  QByteArray ba = text_e1.toLocal8Bit();
+  char *c_str2 = ba.data();
+
+  if (this->configIdx == 0)
+  {
+    Limits_KPI_ue[0][0] =  atof(c_str2);
+  }
+  else if (this->configIdx == 1)
+  {
+    Limits_KPI_ue[0][1] = atof(c_str2);
+  }
+  else if (this->configIdx == 2)
+  {
+    Limits_KPI_ue[1][0] = atof(c_str2);
+  }
+  else if (this->configIdx == 3)
+  {
+    Limits_KPI_ue[1][1] = atof(c_str2);
+  }
 }
 
 PainterWidgetgNB::PainterWidgetgNB(QComboBox *parent, scopeData_t *p)
@@ -89,8 +191,29 @@ PainterWidgetgNB::PainterWidgetgNB(QComboBox *parent, scopeData_t *p)
     this->pix = new QPixmap(this->chartWidth,this->chartHight);
     this->pix->fill(QColor(240,240,240));
     this->parentWindow = parent;
+
+    QScatterSeries *series = new QScatterSeries();
+    this->chart = new QChart();
+    this->chart->addSeries(series);
+    this->chartView = new QChartView(this->chart, this);
+    this->chartView->resize(this->chartWidth, this->chartHight);
+    this->resize(this->chartWidth, this->chartHight);
+    this->isOpenGLUsed = false; 
+    this->chartView->hide();
+    this->axisX = new QValueAxis;
+    this->axisY = new QValueAxis;
+    this->chart->addAxis(this->axisX, Qt::AlignBottom);
+    this->chart->addAxis(this->axisY, Qt::AlignLeft);
+
+    // settings for waterfall graph
+    this->iteration = 0;
+    this->waterFallh = this->chartHight/2 - 15;
+    this->waterFallAvg= (double*) malloc(sizeof(*this->waterFallAvg) * this->waterFallh);
+
+
     this->p = p;
     this->nb_UEs = 1;
+    this->current_instance = 0;
 
     this->indexToPlot = this->parentWindow->currentIndex();
     this->previousIndex = this->parentWindow->currentIndex();
@@ -198,6 +321,18 @@ void PainterWidgetgNB::resizeEvent(QResizeEvent *event)
   {
     this->chartHight = height();
     this->chartWidth = width();
+
+    // reset for waterfall plot
+    if (this->indexToPlot == 15)
+    {
+      QPixmap *newPix = new QPixmap(this->chartWidth,this->chartHight);
+      this->pix = newPix;
+      this->pix->fill(QColor(240,240,240));
+      this->iteration = 0;
+      this->waterFallh = this->chartHight/2 - 15;
+      for (int i=0; i< this->waterFallh; i++)
+        this->waterFallAvg[i]=0;
+    }
     update();
   }
   QWidget::resizeEvent(event);
@@ -216,73 +351,198 @@ void PainterWidgetgNB::paintEvent(QPaintEvent *)
 
 void PainterWidgetgNB::makeConnections()
 {
-    disconnect(timer, nullptr, nullptr, nullptr);
+  this->indexToPlot = this->parentWindow->currentIndex();
+  disconnect(timer, nullptr, nullptr, nullptr);
 
-    if (this->indexToPlot == 0)
+  if ((this->indexToPlot != this->previousIndex) && (this->indexToPlot == 15))   // reset settings
+  {
+    this->pix->fill(QColor(240,240,240));
+    this->iteration = 0;
+    for (int i=0; i< this->waterFallh; i++)
+      this->waterFallAvg[i]=0;
+  }
+
+  if (this->indexToPlot == 0)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_PuschIQ);
+  }
+  else if (this->indexToPlot == 1)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_PuschLLR);
+  }
+  else if (this->indexToPlot == 2)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_ChannelResponse);
+  }
+  else if (this->indexToPlot == 3)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_UL_BLER);
+  }
+  else if (this->indexToPlot == 4)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_DL_BLER);
+  }
+  else if (this->indexToPlot == 5)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_DL_MCS);
+  }
+  else if (this->indexToPlot == 6)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_UL_MCS);
+  }
+  else if (this->indexToPlot == 7)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_UL_Throu);
+  }
+  else if (this->indexToPlot == 8)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_DL_Throu);
+  }
+  else if (this->indexToPlot == 9)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_Nof_RBs);
+  }
+  else if (this->indexToPlot == 10)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_UL_SNR);
+  }
+  else if (this->indexToPlot == 11)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_DL_SNR);
+  }
+  else if (this->indexToPlot == 12)
+  {
+    connect(timerRetrans, &QTimer::timeout, this, &PainterWidgetgNB::KPI_UL_Retrans);
+  }
+  else if (this->indexToPlot == 13)
+  {
+    connect(timerRetrans, &QTimer::timeout, this, &PainterWidgetgNB::KPI_DL_Retrans);
+  }
+  else if ((this->indexToPlot == 14) && (this->current_instance == 0))
+  {
+    KPI_configurations();
+  }
+  else if (this->indexToPlot == 15)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_waterFall);
+  }
+
+  timer->start(100);
+  timerRetrans->start(1000);
+}
+
+void PainterWidgetgNB::KPI_waterFall()
+{
+  this->chartView->hide();
+  QPainter PixPainter(this->pix);
+  PixPainter.translate(0, this->pix->height()/4);
+
+  scopeSample_t *values = (scopeSample_t *) this->p->ru->common.rxdata[0];
+  NR_DL_FRAME_PARMS *frame_parms=&this->p->gNB->frame_parms;
+  const int datasize = frame_parms->samples_per_frame;
+
+  if (values == NULL)
+    return;
+
+  this->waterFallh = this->chartHight/2 - 15;
+  const int samplesPerPixel = datasize/this->chartWidth;
+  int displayPart = this->waterFallh - ScaleZone;
+
+  int row = this->iteration%displayPart;
+  double avg=0;
+
+  for (int i=0; i < displayPart; i++)
+    avg+=this->waterFallAvg[i];
+
+  avg/=displayPart;
+  this->waterFallAvg[row]=0;
+
+  for (int pix=0; pix<this->chartWidth; pix++)
+  {
+    scopeSample_t *end=values+(pix+1)*samplesPerPixel;
+    end-=2;
+
+    double val=0;
+
+    for (scopeSample_t *s=values+(pix)*samplesPerPixel; s <end; s++)
+      val += SquaredNorm(*s);
+
+    val/=samplesPerPixel;
+    this->waterFallAvg[row]+=val/this->chartWidth;
+
+    if (val > avg*2 )
     {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_PuschIQ);
-    }
-    else if (this->indexToPlot == 1)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_PuschLLR);   // paintPixmap_uePbchIQ
-    }
-    else if (this->indexToPlot == 2)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_ChannelResponse);
-    }
-    else if (this->indexToPlot == 3)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_UL_BLER);
-    }
-    else if (this->indexToPlot == 4)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_DL_BLER);
-    }
-    else if (this->indexToPlot == 5)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_DL_MCS);
-    }
-    else if (this->indexToPlot == 6)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_UL_MCS);
-    }
-    else if (this->indexToPlot == 7)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_UL_Throu);
-    }
-    else if (this->indexToPlot == 8)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_DL_Throu);
-    }
-    else if (this->indexToPlot == 9)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_Nof_RBs);
-    }
-    else if (this->indexToPlot == 10)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_UL_SNR);
-    }
-    else if (this->indexToPlot == 11)
-    {
-      connect(timer, &QTimer::timeout, this, &PainterWidgetgNB::KPI_DL_SNR);
-    }
-    else if (this->indexToPlot == 12)
-    {
-      connect(timerRetrans, &QTimer::timeout, this, &PainterWidgetgNB::KPI_UL_Retrans);
-    }
-    else if (this->indexToPlot == 13)
-    {
-      connect(timerRetrans, &QTimer::timeout, this, &PainterWidgetgNB::KPI_DL_Retrans);
+      QColor IQColor(0,0,255);
+      PixPainter.setPen(IQColor);
     }
 
-    timer->start(200);
-    timerRetrans->start(1000);
+    if (val > avg*10 ){
+      QColor IQColor(0,255,0);
+      PixPainter.setPen(IQColor);
+    }
+
+    if (val > avg*100 ){
+      QColor IQColor(255,255,0);
+      PixPainter.setPen(IQColor);
+    }
+
+    PixPainter.drawEllipse( QPoint(pix, this->iteration%displayPart), 2, 2 );
+  }
+
+  // Plot vertical Lines
+  const float verticalSpacing = (float)this->chartWidth / (float)frame_parms->slots_per_frame;
+
+  float startPointUp = -5;
+  float startPointDown = startPointUp + this->waterFallh;
+  for (uint16_t i = 0; i < frame_parms->slots_per_frame; i++)
+  {
+    float lineX = (float)i * verticalSpacing;
+    QColor IQColor(0,0,0);
+    PixPainter.setPen(IQColor);
+    PixPainter.drawLine(QPoint(lineX, startPointUp), QPoint(lineX, startPointUp + 5));
+    PixPainter.drawLine(QPoint(lineX, startPointDown), QPoint(lineX, startPointDown + 5));
+  }
+
+  this->iteration++;
+  this->previousIndex = 15;
+  this->isOpenGLUsed = false;
+  repaint();
+
+}
+void PainterWidgetgNB::KPI_configurations()
+{
+  QWidget *window_1 = new QWidget();
+  window_1->resize(300, 300);
+  window_1->setWindowTitle("gNB Configs");
+  configBoxgNB * configItem1 = new configBoxgNB(window_1, 0);
+  configBoxgNB * configItem2 = new configBoxgNB(window_1, 1);
+  configBoxgNB * configItem3 = new configBoxgNB(window_1, 2);
+  configBoxgNB * configItem4 = new configBoxgNB(window_1, 3);
+  configBoxgNB * configItem5 = new configBoxgNB(window_1, 4);
+  configBoxgNB * configItem6 = new configBoxgNB(window_1, 5);
+  configBoxgNB * configItem7 = new configBoxgNB(window_1, 6);
+  configBoxgNB * configItem8 = new configBoxgNB(window_1, 7);
+
+  QFormLayout *flo = new QFormLayout();
+  flo->addRow("U-BLER lower",configItem1);
+  flo->addRow("U-BLER upper",configItem2);
+  flo->addRow("U-Throughput lower[Mbs]",configItem3);
+  flo->addRow("U-Throughput upper[Mbs]",configItem4);
+  flo->addRow("D-BLER lower",configItem5);
+  flo->addRow("D-BLER upper",configItem6);
+  flo->addRow("D-Throughput lower[Mbs]",configItem7);
+  flo->addRow("D-Throughput upper[Mbs]",configItem8);
+
+  window_1->setLayout(flo);
+  window_1->show();
+  this->current_instance++;
 }
 
 void PainterWidgetgNB::KPI_DL_Retrans()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -291,6 +551,7 @@ void PainterWidgetgNB::KPI_DL_Retrans()
       (this->indexToPlot != this->previousIndex))
   {
     this->DLRetrans[0].plot_idx = 0;
+    this->chart->removeAllSeries();
     for (int i=0; i<4; i++)
     {
       resetKPIPlot(&this->DLRetrans[i]);
@@ -319,41 +580,39 @@ void PainterWidgetgNB::KPI_DL_Retrans()
     }
   }
 
-  QChart *chart = new QChart();
-  chart->legend()->setVisible(true);
-  chart->legend()->setAlignment(Qt::AlignBottom);
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->setVisible(true);
+  this->chart->legend()->setAlignment(Qt::AlignBottom);
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, this->DLRetrans[0].max_value + 5);
-  axisY->setTitleText("Nof Retrans.");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, this->DLRetrans[0].max_value + 5);
+  this->axisY->setTitleText("Nof Retrans.");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  if (this->DLRetrans[0].plot_idx != 0)
+  if (this->DLRetrans[0].plot_idx == 1)
   {
     for (int i=0; i<4;i++){
-      chart->addSeries(this->DLRetrans[i].series);
-      this->DLRetrans[i].series->attachAxis(axisX);
-      this->DLRetrans[i].series->attachAxis(axisY);
+      this->chart->addSeries(this->DLRetrans[i].series);
     }
   }
+  for (int i=0; i<4;i++){
+    this->DLRetrans[i].series->attachAxis(this->axisX);
+    this->DLRetrans[i].series->attachAxis(this->axisY);
+  }
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
   this->DLRetrans[0].plot_idx++;
-  update();
+  this->previousIndex = 13;
+  makeConnections();
 }
 
 
@@ -361,6 +620,7 @@ void PainterWidgetgNB::KPI_UL_Retrans()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -369,6 +629,7 @@ void PainterWidgetgNB::KPI_UL_Retrans()
       (this->indexToPlot != this->previousIndex))
   {
     this->ULRetrans[0].plot_idx = 0;
+    this->chart->removeAllSeries();
     for (int i=0; i<4; i++)
     {
       resetKPIPlot(&this->ULRetrans[i]);
@@ -397,41 +658,39 @@ void PainterWidgetgNB::KPI_UL_Retrans()
     }
   }
 
-  QChart *chart = new QChart();
-  chart->legend()->setVisible(true);
-  chart->legend()->setAlignment(Qt::AlignBottom);
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->setVisible(true);
+  this->chart->legend()->setAlignment(Qt::AlignBottom);
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, this->ULRetrans[0].max_value + 5);
-  axisY->setTitleText("Nof Retrans.");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, this->ULRetrans[0].max_value + 5);
+  this->axisY->setTitleText("Nof Retrans.");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  if (this->ULRetrans[0].plot_idx != 0)
+  if (this->ULRetrans[0].plot_idx == 1)
   {
     for (int i=0; i<4;i++){
-      chart->addSeries(this->ULRetrans[i].series);
-      this->ULRetrans[i].series->attachAxis(axisX);
-      this->ULRetrans[i].series->attachAxis(axisY);
+      this->chart->addSeries(this->ULRetrans[i].series);
     }
   }
+  for (int i=0; i<4;i++){
+    this->ULRetrans[i].series->attachAxis(this->axisX);
+    this->ULRetrans[i].series->attachAxis(this->axisY);
+  }
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
   this->ULRetrans[0].plot_idx++;
-  update();
+  this->previousIndex = 12;
+  makeConnections();
 }
 
 
@@ -439,6 +698,7 @@ void PainterWidgetgNB::KPI_DL_SNR()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -448,6 +708,7 @@ void PainterWidgetgNB::KPI_DL_SNR()
       (this->indexToPlot != this->previousIndex))
   {
     this->DLSNR.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->DLSNR);
   }
 
@@ -458,35 +719,34 @@ void PainterWidgetgNB::KPI_DL_SNR()
   this->DLSNR.max_value = std::max(this->DLSNR.max_value, Ypaint);
   this->DLSNR.series->append(Xpaint, Ypaint);
 
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->hide();
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, this->DLSNR.max_value + 2);
-  axisY->setTitleText("DL SNR (CQI)");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, this->DLSNR.max_value + 2);
+  this->axisY->setTitleText("DL SNR (CQI)");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->DLSNR.series);
-  this->DLSNR.series->attachAxis(axisX);
-  this->DLSNR.series->attachAxis(axisY);
+  if(this->DLSNR.plot_idx == 0){
+    this->chart->addSeries(this->DLSNR.series);
+    this->chartView->setChart(this->chart);
+  }
+  this->DLSNR.series->attachAxis(this->axisX);
+  this->DLSNR.series->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
   this->DLSNR.plot_idx++;
-  update();
+  this->previousIndex = 11;
+  makeConnections();
 }
 
 
@@ -494,6 +754,7 @@ void PainterWidgetgNB::KPI_UL_SNR()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -503,6 +764,7 @@ void PainterWidgetgNB::KPI_UL_SNR()
       (this->indexToPlot != this->previousIndex))
   {
     this->ULSNR.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->ULSNR);
   }
 
@@ -513,35 +775,34 @@ void PainterWidgetgNB::KPI_UL_SNR()
   this->ULSNR.max_value = std::max(this->ULSNR.max_value, Ypaint);
   this->ULSNR.series->append(Xpaint, Ypaint);
 
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  this->chart->legend()->hide();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, 1.2*this->ULSNR.max_value);
-  axisY->setTitleText("PUSCH SNR dB");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, 1.2*this->ULSNR.max_value);
+  this->axisY->setTitleText("PUSCH SNR dB");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->ULSNR.series);
-  this->ULSNR.series->attachAxis(axisX);
-  this->ULSNR.series->attachAxis(axisY);
+  if (this->ULSNR.plot_idx == 0){
+    this->chart->addSeries(this->ULSNR.series);
+    this->chartView->setChart(this->chart);
+  }
+  this->ULSNR.series->attachAxis(this->axisX);
+  this->ULSNR.series->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
   this->ULSNR.plot_idx++;
-  update();
+  this->previousIndex = 10;
+  makeConnections();
 }
 
 
@@ -549,6 +810,7 @@ void PainterWidgetgNB::KPI_Nof_RBs()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -564,6 +826,7 @@ void PainterWidgetgNB::KPI_Nof_RBs()
       (this->indexToPlot != this->previousIndex))
   {
     this->nofRBs.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->nofRBs);
   }
 
@@ -574,35 +837,34 @@ void PainterWidgetgNB::KPI_Nof_RBs()
   this->nofRBs.max_value = std::max(this->nofRBs.max_value, Ypaint);
   this->nofRBs.series->append(Xpaint, Ypaint);
 
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->hide();
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, this->nofRBs.max_value + 10);
-  axisY->setTitleText("Nof Scheduled RBs");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, this->nofRBs.max_value + 10);
+  this->axisY->setTitleText("Nof Scheduled RBs");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->nofRBs.series);
-  this->nofRBs.series->attachAxis(axisX);
-  this->nofRBs.series->attachAxis(axisY);
+  if(this->nofRBs.plot_idx == 0){
+    this->chart->addSeries(this->nofRBs.series);
+    this->chartView->setChart(this->chart);
+  }
+  this->nofRBs.series->attachAxis(this->axisX);
+  this->nofRBs.series->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
   this->nofRBs.plot_idx++;
-  update();
+  this->previousIndex = 9;
+  makeConnections();
 }
 
 
@@ -610,6 +872,7 @@ void PainterWidgetgNB::KPI_DL_Throu()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -630,6 +893,7 @@ void PainterWidgetgNB::KPI_DL_Throu()
       (this->indexToPlot != this->previousIndex))
   {
     this->DLThrou.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->DLThrou);
   }
 
@@ -650,49 +914,49 @@ void PainterWidgetgNB::KPI_DL_Throu()
   series_UppLim->append(this->chartWidth, Limits_KPI_gNB[3][1]);
   series_UppLim->setColor(QColor(255, 0, 0));
 
-  QChart *chart = new QChart();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
   chart->legend()->hide();
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, 1.2*this->DLThrou.max_value);
-  axisY->setTitleText("UL Throughput Mbit/sec");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, 1.2*this->DLThrou.max_value);
+  this->axisY->setTitleText("UL Throughput Mbit/sec");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->DLThrou.series);
-  this->DLThrou.series->attachAxis(axisX);
-  this->DLThrou.series->attachAxis(axisY);
+  if (this->DLThrou.plot_idx == 0){
+    this->chart->addSeries(this->DLThrou.series);
+    this->chartView->setChart(this->chart);
+  }
+  this->DLThrou.series->attachAxis(this->axisX);
+  this->DLThrou.series->attachAxis(this->axisY);
 
-  chart->addSeries(series_LowLim);
-  series_LowLim->attachAxis(axisX);
-  series_LowLim->attachAxis(axisY);
+  this->chart->addSeries(series_LowLim);
+  series_LowLim->attachAxis(this->axisX);
+  series_LowLim->attachAxis(this->axisY);
 
-  chart->addSeries(series_UppLim);
-  series_UppLim->attachAxis(axisX);
-  series_UppLim->attachAxis(axisY);
+  this->chart->addSeries(series_UppLim);
+  series_UppLim->attachAxis(this->axisX);
+  series_UppLim->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
   this->DLThrou.plot_idx++;
-  update();
+  this->previousIndex = 8;
+  makeConnections();
 }
 
 void PainterWidgetgNB::KPI_UL_Throu()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -713,6 +977,7 @@ void PainterWidgetgNB::KPI_UL_Throu()
       (this->indexToPlot != this->previousIndex))
   {
     this->ULThrou.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->ULThrou);
   }
 
@@ -733,49 +998,49 @@ void PainterWidgetgNB::KPI_UL_Throu()
   series_UppLim->append(this->chartWidth, Limits_KPI_gNB[1][1]);
   series_UppLim->setColor(QColor(255, 0, 0));
 
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  this->chart->legend()->hide();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, 1.2*this->ULThrou.max_value);
-  axisY->setTitleText("UL Throughput Mbit/sec");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, 1.2*this->ULThrou.max_value);
+  this->axisY->setTitleText("UL Throughput Mbit/sec");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->ULThrou.series);
-  this->ULThrou.series->attachAxis(axisX);
-  this->ULThrou.series->attachAxis(axisY);
+  if (this->ULThrou.plot_idx == 0){
+    this->chart->addSeries(this->ULThrou.series);
+    this->chartView->setChart(this->chart);
+  }
+  this->ULThrou.series->attachAxis(this->axisX);
+  this->ULThrou.series->attachAxis(this->axisY);
 
-  chart->addSeries(series_LowLim);
-  series_LowLim->attachAxis(axisX);
-  series_LowLim->attachAxis(axisY);
+  this->chart->addSeries(series_LowLim);
+  series_LowLim->attachAxis(this->axisX);
+  series_LowLim->attachAxis(this->axisY);
 
-  chart->addSeries(series_UppLim);
-  series_UppLim->attachAxis(axisX);
-  series_UppLim->attachAxis(axisY);
+  this->chart->addSeries(series_UppLim);
+  series_UppLim->attachAxis(this->axisX);
+  series_UppLim->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
   this->ULThrou.plot_idx++;
-  update();
+  this->previousIndex = 7;
+  makeConnections();
 }
 
 void PainterWidgetgNB::KPI_DL_MCS()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -785,6 +1050,7 @@ void PainterWidgetgNB::KPI_DL_MCS()
       (this->indexToPlot != this->previousIndex))
   {
     this->DLMCS.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->DLMCS);
 
     if(this->indexToPlot != this->previousIndex)
@@ -802,49 +1068,51 @@ void PainterWidgetgNB::KPI_DL_MCS()
   this->DLMCS.seriesMin->append(Xpaint, this->DLMCS.min_value);
   this->DLMCS.seriesMax->append(Xpaint, this->DLMCS.max_value);
 
-  QChart *chart = new QChart();
   chart->legend()->show();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, this->DLMCS.max_value + 2.0);
-  axisY->setTitleText("DL MCS");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, this->DLMCS.max_value + 2.0);
+  this->axisY->setTitleText("DL MCS");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->DLMCS.series);
-  this->DLMCS.series->attachAxis(axisX);
-  this->DLMCS.series->attachAxis(axisY);
+  if (this->DLMCS.plot_idx == 0)
+    this->chart->addSeries(this->DLMCS.series);
+  this->DLMCS.series->attachAxis(this->axisX);
+  this->DLMCS.series->attachAxis(this->axisY);
 
-  chart->addSeries(this->DLMCS.seriesMin);
-  this->DLMCS.seriesMin->attachAxis(axisX);
-  this->DLMCS.seriesMin->attachAxis(axisY);
+  if (this->DLMCS.plot_idx == 0)
+    this->chart->addSeries(this->DLMCS.seriesMin);
+  this->DLMCS.seriesMin->attachAxis(this->axisX);
+  this->DLMCS.seriesMin->attachAxis(this->axisY);
 
-  chart->addSeries(this->DLMCS.seriesMax);
-  this->DLMCS.seriesMax->attachAxis(axisX);
-  this->DLMCS.seriesMax->attachAxis(axisY);
+  if (this->DLMCS.plot_idx == 0)
+    this->chart->addSeries(this->DLMCS.seriesMax);
+  this->DLMCS.seriesMax->attachAxis(this->axisX);
+  this->DLMCS.seriesMax->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  if (this->DLMCS.plot_idx == 0)
+    this->chartView->setChart(this->chart);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
   this->DLMCS.plot_idx++;
-  update();
+  this->previousIndex = 5;
+  makeConnections();
 }
 
 void PainterWidgetgNB::KPI_DL_BLER()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -854,6 +1122,7 @@ void PainterWidgetgNB::KPI_DL_BLER()
       (this->indexToPlot != this->previousIndex))
   {
     this->DLBLER.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->DLBLER);
   }
 
@@ -872,49 +1141,51 @@ void PainterWidgetgNB::KPI_DL_BLER()
   series_UppLim->append(this->chartWidth, Limits_KPI_gNB[2][1]);
   series_UppLim->setColor(QColor(255, 0, 0));
 
-  QChart *chart = new QChart();
   chart->legend()->hide();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index (calc window: 100 ms)");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index (calc window: 100 ms)");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, 1.5);
-  axisY->setTitleText("DL BLER");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, 1.5);
+  this->axisY->setTitleText("DL BLER");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->DLBLER.series);
-  this->DLBLER.series->attachAxis(axisX);
-  this->DLBLER.series->attachAxis(axisY);
+  if(this->DLBLER.plot_idx == 0){
+    this->chart->addSeries(this->DLBLER.series);
+    this->chartView->setChart(this->chart);
+  }
+  this->DLBLER.series->attachAxis(this->axisX);
+  this->DLBLER.series->attachAxis(this->axisY);
 
-  chart->addSeries(series_LowLim);
-  series_LowLim->attachAxis(axisX);
-  series_LowLim->attachAxis(axisY);
+  this->chart->addSeries(series_LowLim);
+  series_LowLim->attachAxis(this->axisX);
+  series_LowLim->attachAxis(this->axisY);
 
-  chart->addSeries(series_UppLim);
-  series_UppLim->attachAxis(axisX);
-  series_UppLim->attachAxis(axisY);
+  this->chart->addSeries(series_UppLim);
+  series_UppLim->attachAxis(this->axisX);
+  series_UppLim->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
   this->DLBLER.plot_idx++;
-  update();
+  this->isOpenGLUsed = false;
+  this->previousIndex = 4;
+
+  makeConnections();
 }
 
 void PainterWidgetgNB::KPI_UL_BLER()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -924,6 +1195,7 @@ void PainterWidgetgNB::KPI_UL_BLER()
       (this->indexToPlot != this->previousIndex))
   {
     this->ULBLER.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->ULBLER);
   }
 
@@ -942,50 +1214,49 @@ void PainterWidgetgNB::KPI_UL_BLER()
   series_UppLim->append(this->chartWidth, Limits_KPI_gNB[0][1]);
   series_UppLim->setColor(QColor(255, 0, 0));
 
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  this->chart->legend()->hide();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index (calc window: 100 ms)");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index (calc window: 100 ms)");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, 1.5);
-  axisY->setTitleText("UL BLER");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, 1.5);
+  this->axisY->setTitleText("UL BLER");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
+  if (this->ULBLER.plot_idx == 0){
+    this->chart->addSeries(this->ULBLER.series);
+    this->chartView->setChart(this->chart);
+  }
+  this->ULBLER.series->attachAxis(this->axisX);
+  this->ULBLER.series->attachAxis(this->axisY);
 
-  chart->addSeries(this->ULBLER.series);
-  this->ULBLER.series->attachAxis(axisX);
-  this->ULBLER.series->attachAxis(axisY);
+  this->chart->addSeries(series_LowLim);
+  series_LowLim->attachAxis(this->axisX);
+  series_LowLim->attachAxis(this->axisY);
 
-  chart->addSeries(series_LowLim);
-  series_LowLim->attachAxis(axisX);
-  series_LowLim->attachAxis(axisY);
+  this->chart->addSeries(series_UppLim);
+  series_UppLim->attachAxis(this->axisX);
+  series_UppLim->attachAxis(this->axisY);
 
-  chart->addSeries(series_UppLim);
-  series_UppLim->attachAxis(axisX);
-  series_UppLim->attachAxis(axisY);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
-
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
+  this->previousIndex = 3;
   this->ULBLER.plot_idx++;
-  update();
+  makeConnections();
 }
 
 void PainterWidgetgNB::KPI_UL_MCS()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
 
   gNB_MAC_INST *gNBMac = (gNB_MAC_INST *)RC.nrmac[0];
   NR_UE_info_t *targetUE = gNBMac->UE_info.list[0];
@@ -995,6 +1266,7 @@ void PainterWidgetgNB::KPI_UL_MCS()
       (this->indexToPlot != this->previousIndex))
   {
     this->ULMCS.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->ULMCS);
 
     if (this->indexToPlot != this->previousIndex)
@@ -1012,49 +1284,51 @@ void PainterWidgetgNB::KPI_UL_MCS()
   this->ULMCS.seriesMin->append(Xpaint, this->ULMCS.min_value);
   this->ULMCS.seriesMax->append(Xpaint, this->ULMCS.max_value);
 
-  QChart *chart = new QChart();
-  chart->legend()->show();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->show();
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, this->ULMCS.max_value + 2.0);
-  axisY->setTitleText("UL MCS");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, this->ULMCS.max_value + 2.0);
+  this->axisY->setTitleText("UL MCS");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->ULMCS.series);
-  this->ULMCS.series->attachAxis(axisX);
-  this->ULMCS.series->attachAxis(axisY);
+  if(this->ULMCS.plot_idx == 0)
+    this->chart->addSeries(this->ULMCS.series);
+  this->ULMCS.series->attachAxis(this->axisX);
+  this->ULMCS.series->attachAxis(this->axisY);
 
-  chart->addSeries(this->ULMCS.seriesMin);
-  this->ULMCS.seriesMin->attachAxis(axisX);
-  this->ULMCS.seriesMin->attachAxis(axisY);
+  if(this->ULMCS.plot_idx == 0)
+    this->chart->addSeries(this->ULMCS.seriesMin);
+  this->ULMCS.seriesMin->attachAxis(this->axisX);
+  this->ULMCS.seriesMin->attachAxis(this->axisY);
 
-  chart->addSeries(this->ULMCS.seriesMax);
-  this->ULMCS.seriesMax->attachAxis(axisX);
-  this->ULMCS.seriesMax->attachAxis(axisY);
+  if(this->ULMCS.plot_idx == 0)
+    this->chart->addSeries(this->ULMCS.seriesMax);
+  this->ULMCS.seriesMax->attachAxis(this->axisX);
+  this->ULMCS.seriesMax->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  if(this->ULMCS.plot_idx == 0)
+    this->chartView->setChart(this->chart);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
   this->ULMCS.plot_idx++;
-  update();
+  this->previousIndex = 6;
+  makeConnections();
 }
 
 void PainterWidgetgNB::KPI_PuschIQ()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->previousIndex = 0;
 
   //paint the axis and I/Q samples
   NR_DL_FRAME_PARMS *frame_parms=&this->p->gNB->frame_parms;
@@ -1083,14 +1357,13 @@ void PainterWidgetgNB::KPI_PuschIQ()
   const QString xLabel = QString("Real");
   const QString yLabel = QString("Img");
   createPixMap(I, Q, sz, MarkerColor, xLabel, yLabel, true);
-
-  update();
 }
 
 void PainterWidgetgNB::KPI_PuschLLR()
 {
     // erase the previous paint
     this->pix->fill(QColor(240,240,240));
+    this->previousIndex = 1;
 
     //paint the axis LLRs
     int coded_bits_per_codeword =3*8*6144+12;
@@ -1112,19 +1385,19 @@ void PainterWidgetgNB::KPI_PuschLLR()
         llr[i] = (float) pusch_llr[i];
         bit[i] = (float) i;
       }
+      this->current_instance++;
     }
 
     QColor MarkerColor(0, 255, 0);
     const QString xLabel = QString("Sample Index");
     const QString yLabel = QString("LLR");
     createPixMap(bit, llr, sz, MarkerColor, xLabel, yLabel, false);
-
-    update();
 }
 
 void PainterWidgetgNB::KPI_ChannelResponse()
 {
   this->pix->fill(QColor(240,240,240));
+  this->previousIndex = 2;
 
   const int len=2*this->p->gNB->frame_parms.ofdm_symbol_size;
   float *values, *time;
@@ -1148,10 +1421,9 @@ void PainterWidgetgNB::KPI_ChannelResponse()
         values[i] = SquaredNorm(data[i]);
         time[i] = (float) i;
       }
+      this->current_instance++;
     }
-
   }
-
   float maxY=0, minY=0;
   for (int k=0; k<len; k++) {
     maxY=std::max(maxY,values[k]);
@@ -1159,10 +1431,10 @@ void PainterWidgetgNB::KPI_ChannelResponse()
   }
 
   float maxYAbs = std::max(abs(maxY),abs(minY));
-
   QLineSeries *series = new QLineSeries();
   QColor MarkerColor(255, 0, 0);
   series->setColor(MarkerColor);
+  series->setUseOpenGL(true);
 
   float Xpaint, Ypaint;
 
@@ -1176,33 +1448,33 @@ void PainterWidgetgNB::KPI_ChannelResponse()
     minYScaled=std::min(minYScaled,Ypaint);
   }
 
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  this->chart->legend()->hide();
+  this->chart->removeAllSeries();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , len);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , len);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
-  axisY->setTitleText("abs Channel");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
+  this->axisY->setTitleText("abs Channel");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(series);
+  this->chart->addSeries(series);
 
-  series->attachAxis(axisX);
-  series->attachAxis(axisY);
+  series->attachAxis(this->axisX);
+  series->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->setChart(this->chart);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-  update();
+  makeConnections();
 }
 
 void PainterWidgetgNB::createPixMap(float *xData, float *yData, int len, QColor MarkerColor,
@@ -1252,115 +1524,131 @@ void PainterWidgetgNB::createPixMap(float *xData, float *yData, int len, QColor 
   }
 
   series->replace(points);
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  this->chart->removeAllSeries();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->hide();
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-
+  this->axisX->setTickCount(nofTicks);
   if (!scaleX)
-    axisX->setRange(0 , len);
+    this->axisX->setRange(0 , len);
   else
   {
     if ((minXScaled != 0) && (maxXScaled != 0))
-      axisX->setRange((minXScaled + 0.4*minXScaled) , (maxXScaled + 0.4*maxXScaled));
+      this->axisX->setRange((minXScaled + 0.4*minXScaled) , (maxXScaled + 0.4*maxXScaled));
     else
-      axisX->setRange(-10,10);
+      this->axisX->setRange(-10,10);
   }
 
-  axisX->setTitleText(xLabel);
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTitleText(xLabel);
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
+  this->axisY->setTickCount(nofTicks);
   if ((minYScaled != 0) && (maxYScaled != 0))
-    axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
+    this->axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
   else
-    axisY->setRange(-10, 10);
-  axisY->setTitleText(yLabel);
-  chart->addAxis(axisY, Qt::AlignLeft);
+    this->axisY->setRange(-10, 10);
+  this->axisY->setTitleText(yLabel);
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(series);
+  this->chart->addSeries(series);
+  series->attachAxis(this->axisX);
+  series->attachAxis(this->axisY);
+  this->chartView->setChart(this->chart);
+  this->isOpenGLUsed = true;
 
-  series->attachAxis(axisX);
-  series->attachAxis(axisY);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QChartView *chartView = new QChartView();
-  chartView->resize(this->chartWidth, this->chartHight);
-  chartView->setChart(chart);
-
-  QPixmap pixFromChart = chartView->grab();
-  *this->pix = pixFromChart;
+  makeConnections();
 }
 
 void PainterWidget::paintPixmap_ueWaterFallTime()
 {
-    QPainter PixPainter(this->pix);
+  this->chartView->hide();
+  this->isWaterFallTimeActive = true;
+  QPainter PixPainter(this->pix);
+  PixPainter.translate(0, this->pix->height()/4);
 
-    PixPainter.translate(0, this->pix->height()/2);
+  scopeSample_t *values = (scopeSample_t *) this->ue->common_vars.rxdata[0];
+  const int datasize = this->ue->frame_parms.samples_per_frame;
 
-    scopeSample_t *values = (scopeSample_t *) this->ue->common_vars.rxdata[0];
-    const int datasize = this->ue->frame_parms.samples_per_frame;
+  if (values == NULL)
+    return;
 
-    if (values == NULL)
-      return;
+  this->waterFallh = this->chartHight/2 - 15;
+  const int samplesPerPixel = datasize/this->chartWidth;
+  int displayPart = this->waterFallh - ScaleZone;
 
-    this->waterFallh = this->chartHight/3 - 15;
-    const int samplesPerPixel = datasize/this->chartWidth;
-    int displayPart = this->waterFallh - ScaleZone;
+  int row = this->iteration%displayPart;
+  double avg=0;
 
-    int row = this->iteration%displayPart;
-    double avg=0;
+  for (int i=0; i < displayPart; i++)
+    avg+=this->waterFallAvg[i];
 
-    for (int i=0; i < displayPart; i++)
-      avg+=this->waterFallAvg[i];
+  avg/=displayPart;
+  this->waterFallAvg[row]=0;
 
-    avg/=displayPart;
-    this->waterFallAvg[row]=0;
+  for (int pix=0; pix<this->chartWidth; pix++)
+  {
+    scopeSample_t *end=values+(pix+1)*samplesPerPixel;
+    end-=2;
 
-    for (int pix=0; pix<this->chartWidth; pix++)
+    double val=0;
+
+    for (scopeSample_t *s=values+(pix)*samplesPerPixel; s <end; s++)
+      val += SquaredNorm(*s);
+
+    val/=samplesPerPixel;
+    this->waterFallAvg[row]+=val/this->chartWidth;
+
+    if (val > avg*2 )
     {
-      scopeSample_t *end=values+(pix+1)*samplesPerPixel;
-      end-=2;
-
-      double val=0;
-
-      for (scopeSample_t *s=values+(pix)*samplesPerPixel; s <end; s++)
-        val += SquaredNorm(*s);
-
-      val/=samplesPerPixel;
-      this->waterFallAvg[row]+=val/this->chartWidth;
-
-      if (val > avg*2 )
-      {
-        QColor IQColor(0,0,255);
-        PixPainter.setPen(IQColor);
-      }
-
-      if (val > avg*10 ){
-        QColor IQColor(0,255,0);
-        PixPainter.setPen(IQColor);
-      }
-
-      if (val > avg*100 ){
-        QColor IQColor(255,255,0);
-        PixPainter.setPen(IQColor);
-      }
-
-      PixPainter.drawEllipse( QPoint(pix, this->iteration%displayPart), 2, 2 );
-
+      QColor IQColor(0,0,255);
+      PixPainter.setPen(IQColor);
     }
 
-    this->iteration++;
-    repaint();
+    if (val > avg*10 ){
+      QColor IQColor(0,255,0);
+      PixPainter.setPen(IQColor);
+    }
 
+    if (val > avg*100 ){
+      QColor IQColor(255,255,0);
+      PixPainter.setPen(IQColor);
+    }
+
+    PixPainter.drawEllipse( QPoint(pix, this->iteration%displayPart), 2, 2 );
+  }
+
+  // Plot vertical Lines
+  NR_DL_FRAME_PARMS *frame_parms = &this->ue->frame_parms;
+  const float verticalSpacing = (float)this->chartWidth / (float)frame_parms->slots_per_frame;
+
+  float startPointUp = -5;
+  float startPointDown = startPointUp + this->waterFallh;
+  for (uint16_t i = 0; i < frame_parms->slots_per_frame; i++)
+  {
+    float lineX = (float)i * verticalSpacing;
+    QColor IQColor(0,0,0);
+    PixPainter.setPen(IQColor);
+    PixPainter.drawLine(QPoint(lineX, startPointUp), QPoint(lineX, startPointUp + 5));
+    PixPainter.drawLine(QPoint(lineX, startPointDown), QPoint(lineX, startPointDown + 5));
+  }
+
+  this->iteration++;
+  this->previousIndex = 6;
+  this->isOpenGLUsed = false;
+  repaint();
 }
 
 void PainterWidget::resetKPIPlot(KPI_elements *inputStruct)
 {
   inputStruct->series = new QLineSeries();
   inputStruct->series->setColor(QColor(0,0,0));
+  //inputStruct->series->setUseOpenGL(true);
 
   inputStruct->seriesMin = new QLineSeries();
   inputStruct->seriesMin->setColor(QColor(255,0,0));
@@ -1396,16 +1684,29 @@ PainterWidget::PainterWidget(QComboBox *parent, PHY_VARS_NR_UE *ue)
 
     this->parentWindow = parent;
 
+    QScatterSeries *series = new QScatterSeries();
+    this->chart = new QChart();
+    this->chart->addSeries(series);
+    this->chartView = new QChartView(this->chart, this);
+    this->chartView->resize(this->chartWidth, this->chartHight);
+    this->resize(this->chartWidth, this->chartHight);
+    this->isOpenGLUsed = false;
+    this->chartView->hide();
+    this->axisX = new QValueAxis;
+    this->axisY = new QValueAxis;
+    this->chart->addAxis(this->axisX, Qt::AlignBottom);
+    this->chart->addAxis(this->axisY, Qt::AlignLeft);
+
     // settings for waterfall graph
     this->iteration = 0;
-    this->waterFallh = this->chartHight/3 - 15;
+    this->waterFallh = this->chartHight/2 - 15;
     this->waterFallAvg= (double*) malloc(sizeof(*this->waterFallAvg) * this->waterFallh);
     this->isWaterFallTimeActive = false;
 
     for (int i=0; i< this->waterFallh; i++)
       this->waterFallAvg[i]=0;
 
-    this->previousIndex = this->parentWindow->currentIndex();
+    this->previousIndex = -1;
     this->indexToPlot = this->parentWindow->currentIndex();
 
     this->extendKPIUE.DL_BLER = -1;
@@ -1435,19 +1736,9 @@ PainterWidget::PainterWidget(QComboBox *parent, PHY_VARS_NR_UE *ue)
     makeConnections();
 }
 
-void PainterWidget::paintEvent(QPaintEvent *)
-{
-  QPainter painter(this);
-  painter.drawPixmap( (this->width()-this->pix->width())/2,
-  (this->height()-this->pix->height())/2, *this->pix); // paint pixmap on widget
-
-  this->indexToPlot = this->parentWindow->currentIndex();
-  makeConnections();
-  this->previousIndex = this->parentWindow->currentIndex();
-}
-
 void PainterWidget::makeConnections()
 {
+  this->indexToPlot = this->parentWindow->currentIndex();
   getKPIUE(&this->extendKPIUE);
   disconnect(timer, nullptr, nullptr, nullptr);
   disconnect(timerWaterFallTime, nullptr, nullptr, nullptr);
@@ -1460,51 +1751,36 @@ void PainterWidget::makeConnections()
       this->waterFallAvg[i]=0;
   }
 
-  if (this->indexToPlot == 2)
+  if (this->indexToPlot == 0)
   {
-    if (this->isWaterFallTimeActive)
-      this->iteration++;
-    connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePdschIQ);   // paintPixmap_uePdschIQ
-  }
-  else if (this->indexToPlot == 0)
-  {
-    if (this->isWaterFallTimeActive)
-      this->iteration++;
-    connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePbchIQ);   // paintPixmap_uePbchIQ
-  }
-  else if (this->indexToPlot == 4)
-  {
-    if (this->isWaterFallTimeActive)
-      this->iteration++;
-    connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePdcchIQ);
-  }
-  else if (this->indexToPlot == 3)
-  {
-    if (this->isWaterFallTimeActive)
-      this->iteration++;
-    connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePdschLLR);    // paintPixmap_uePdschLLR
+    connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePbchIQ);
   }
   else if (this->indexToPlot == 1)
   {
-    if (this->isWaterFallTimeActive)
-      this->iteration++;
-    connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePbchLLR);    // paintPixmap_uePbchLLR
+    connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePbchLLR);
+  }
+  else if (this->indexToPlot == 2)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePdschIQ);
+  }
+  else if (this->indexToPlot == 3)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePdschLLR);
+  }
+  else if (this->indexToPlot == 4)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePdcchIQ);
   }
   else if (this->indexToPlot == 5)
   {
-    if (this->isWaterFallTimeActive)
-      this->iteration++;
     connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_uePdcchLLR);
   }
   else if (this->indexToPlot == 6)
   {
-    this->isWaterFallTimeActive = true;
     connect(timerWaterFallTime, &QTimer::timeout, this, &PainterWidget::paintPixmap_ueWaterFallTime);    // water fall time domain
   }
   else if (this->indexToPlot == 7)
   {
-    if (this->isWaterFallTimeActive)
-      this->iteration++;
     connect(timer, &QTimer::timeout, this, &PainterWidget::paintPixmap_ueChannelResponse);    // Channel Response
   }
   else if (this->indexToPlot == 8)
@@ -1523,19 +1799,171 @@ void PainterWidget::makeConnections()
   {
     connect(timer, &QTimer::timeout, this, &PainterWidget::KPI_Nof_RBs);
   }
-  timer->start(200);
-  timerWaterFallTime->start(10);
+  else if (this->indexToPlot == 12)
+  {
+    connect(timer, &QTimer::timeout, this, &PainterWidget::KPI_FreqOff_TimeAdv);
+  }
+  else if (this->indexToPlot == 13)
+  {
+    KPI_configurations();
+  }
+  timer->start(100);
+  timerWaterFallTime->start(100);
+}
+
+void PainterWidget::KPI_configurations()
+{
+  QWidget *window_1 = new QWidget();
+  window_1->resize(300, 300);
+  window_1->setWindowTitle("UE Configs");
+  configBoxgUE * configItem1 = new configBoxgUE(window_1, 0);
+  configBoxgUE * configItem2 = new configBoxgUE(window_1, 1);
+  configBoxgUE * configItem3 = new configBoxgUE(window_1, 2);
+  configBoxgUE * configItem4 = new configBoxgUE(window_1, 3);
+  QFormLayout *flo = new QFormLayout();
+  flo->addRow("BLER lower",configItem1);
+  flo->addRow("BLER upper",configItem2);
+  flo->addRow("Throughput lower[Mbs]",configItem3);
+  flo->addRow("Throughput upper[Mbs]",configItem4);
+  window_1->setLayout(flo);
+  window_1->show();
+  //this->current_instance++;
+}
+
+void PainterWidget::createScatterPlot(float *xData, float *yData, int len,
+                                      QColor MarkerColor, const QString xLabel,
+                                      const QString yLabel, bool scaleX)
+{
+  float maxX=0, maxY=0, minX=0, minY=0;
+  for (int k=0; k<len; k++) {
+    maxX=std::max(maxX,xData[k]);
+    minX=std::min(minX,xData[k]);
+    maxY=std::max(maxY,yData[k]);
+    minY=std::min(minY,yData[k]);
+  }
+
+  float maxYAbs = std::max(abs(maxY),abs(minY));
+  float maxXAbs = std::max(abs(maxX),abs(minX));
+
+  QScatterSeries *series = new QScatterSeries();
+  series->setUseOpenGL(true);
+  series->setColor(MarkerColor);
+  series->setMarkerSize(2);
+  series->setBorderColor(Qt::transparent);
+  series->setMarkerShape(QScatterSeries::MarkerShapeCircle);
+
+  float Xpaint, Ypaint;
+
+  QVector<QPointF> points(len);
+
+  float minYScaled=0, maxYScaled=0, maxXScaled = 0, minXScaled = 0;
+  for (int k=0; k<len; k++) {
+
+    if (maxYAbs != 0)
+      Ypaint = yData[k]/maxYAbs*50;
+    else
+      Ypaint = yData[k];
+
+    if ((maxXAbs != 0) && (scaleX))
+      Xpaint = xData[k]/maxXAbs*50;
+    else
+      Xpaint = xData[k];
+
+    points[k] = QPointF(Xpaint, Ypaint);
+    maxYScaled=std::max(maxYScaled,Ypaint);
+    minYScaled=std::min(minYScaled,Ypaint);
+    maxXScaled=std::max(maxXScaled,Xpaint);
+    minXScaled=std::min(minXScaled,Xpaint);
+  }
+
+  series->replace(points);
+  //QChart *chart = new QChart();
+  this->chart->removeAllSeries();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->hide();
+
+  int nofTicks = 6;
+  //QValueAxis *axisX = new QValueAxis;
+  this->axisX->setTickCount(nofTicks);
+
+  if (!scaleX)
+    this->axisX->setRange(0 , len);
+  else
+  {
+    if ((minXScaled != 0) && (maxXScaled != 0))
+      this->axisX->setRange((minXScaled + 0.4*minXScaled) , (maxXScaled + 0.4*maxXScaled));
+    else
+      this->axisX->setRange(-10,10);
+  }
+
+  this->axisX->setTitleText(xLabel);
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
+
+  //QValueAxis *axisY = new QValueAxis;
+  this->axisY->setTickCount(nofTicks);
+  if ((minYScaled != 0) && (maxYScaled != 0))
+    this->axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
+  else
+    this->axisY->setRange(-10, 10);
+  this->axisY->setTitleText(yLabel);
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
+
+  this->chart->addSeries(series);
+  series->attachAxis(this->axisX);
+  series->attachAxis(this->axisY);
+  this->chartView->setChart(this->chart);
+  this->isOpenGLUsed = true;
+
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
+
+  makeConnections();
+}
+
+void PainterWidget::paintEvent(QPaintEvent *)
+{
+  QPainter painter(this);
+  painter.drawPixmap( (this->width()-this->pix->width())/2,
+  (this->height()-this->pix->height())/2, *this->pix); // paint pixmap on widget
+
+  makeConnections();
+}
+
+void PainterWidget::KPI_FreqOff_TimeAdv()
+{
+  this->chartView->hide();
+  this->pix->fill(QColor(240,240,240));
+  QPainter PixPainter(this->pix);
+  PixPainter.translate(0, this->pix->height()/2);
+  float maxYScaled = (float)this->chartHight;
+  float freq_offset = (float)this->ue->common_vars.freq_offset;
+  std::string strFreq = "Freq. Offset= " + std::to_string(freq_offset);
+  QString qstrFreq = QString::fromStdString(strFreq);
+  PixPainter.drawText(20, -0.2*maxYScaled, qstrFreq);
+
+  float timing_advance = (float)this->ue->timing_advance;
+  std::string strTime = "Timing Advance= " + std::to_string(timing_advance);
+  QString qstrTime = QString::fromStdString(strTime);
+  PixPainter.drawText(20, 0*maxYScaled, qstrTime);
+  this->previousIndex = 12;
+  this->isOpenGLUsed = false;
+  update();
 }
 
 void PainterWidget::KPI_Nof_RBs()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
+  this->isOpenGLUsed = false;
 
   if ((this->nofRBs.plot_idx > this->chartWidth) ||
       (this->indexToPlot != this->previousIndex))
   {
     this->nofRBs.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->nofRBs);
   }
 
@@ -1546,41 +1974,42 @@ void PainterWidget::KPI_Nof_RBs()
   this->nofRBs.max_value = std::max(this->nofRBs.max_value, Ypaint);
   this->nofRBs.series->append(Xpaint, Ypaint);
 
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->hide();
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, this->nofRBs.max_value + 10);
-  axisY->setTitleText("Nof Scheduled RBs");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, this->nofRBs.max_value + 10);
+  this->axisY->setTitleText("Nof Scheduled RBs");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->nofRBs.series);
-  this->nofRBs.series->attachAxis(axisX);
-  this->nofRBs.series->attachAxis(axisY);
+  if (this->nofRBs.plot_idx == 0){
+    this->chart->addSeries(this->nofRBs.series);
+    this->chartView->setChart(this->chart);
+  }
+  this->nofRBs.series->attachAxis(this->axisX);
+  this->nofRBs.series->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
+  this->previousIndex = 11;
   this->nofRBs.plot_idx++;
-  update();
+  makeConnections();
 }
 
 void PainterWidget::KPI_DL_Throu()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
+  this->isOpenGLUsed = false;
 
   uint32_t blockSize = (uint32_t)this->extendKPIUE.blockSize;
   float bler_dl = this->extendKPIUE.DL_BLER;
@@ -1598,6 +2027,7 @@ void PainterWidget::KPI_DL_Throu()
       (this->indexToPlot != this->previousIndex))
   {
     this->Throu.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->Throu);
   }
 
@@ -1618,54 +2048,56 @@ void PainterWidget::KPI_DL_Throu()
   series_UppLim->append(this->chartWidth, Limits_KPI_gNB[1][1]);
   series_UppLim->setColor(QColor(255, 0, 0));
 
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->hide();
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, 1.2*this->Throu.max_value);
-  axisY->setTitleText("UL Throughput Mbit/sec");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, 1.2*this->Throu.max_value);
+  this->axisY->setTitleText("UL Throughput Mbit/sec");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->Throu.series);
-  this->Throu.series->attachAxis(axisX);
-  this->Throu.series->attachAxis(axisY);
+  if (this->Throu.plot_idx == 0){
+    this->chart->addSeries(this->Throu.series);
+    this->chartView->setChart(this->chart);
+  }
+  this->Throu.series->attachAxis(this->axisX);
+  this->Throu.series->attachAxis(this->axisY);
 
-  chart->addSeries(series_LowLim);
-  series_LowLim->attachAxis(axisX);
-  series_LowLim->attachAxis(axisY);
+  this->chart->addSeries(series_LowLim);
+  series_LowLim->attachAxis(this->axisX);
+  series_LowLim->attachAxis(this->axisY);
 
-  chart->addSeries(series_UppLim);
-  series_UppLim->attachAxis(axisX);
-  series_UppLim->attachAxis(axisY);
+  this->chart->addSeries(series_UppLim);
+  series_UppLim->attachAxis(this->axisX);
+  series_UppLim->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
+  this->previousIndex = 9;
   this->Throu.plot_idx++;
-  update();
+  makeConnections();
 }
 
 void PainterWidget::KPI_DL_MCS()
 {
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
+  this->chartView->hide();
+  this->isOpenGLUsed = false;
 
   if ((this->DLMCS.plot_idx > this->chartWidth) ||
       (this->indexToPlot != this->previousIndex))
   {
     this->DLMCS.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->DLMCS);
 
     if(this->indexToPlot != this->previousIndex)
@@ -1683,55 +2115,60 @@ void PainterWidget::KPI_DL_MCS()
   this->DLMCS.seriesMin->append(Xpaint, this->DLMCS.min_value);
   this->DLMCS.seriesMax->append(Xpaint, this->DLMCS.max_value);
 
-  QChart *chart = new QChart();
-  chart->legend()->show();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->show();
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, this->DLMCS.max_value + 2.0);
-  axisY->setTitleText("DL MCS");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, this->DLMCS.max_value + 2.0);
+  this->axisY->setTitleText("DL MCS");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->DLMCS.series);
-  this->DLMCS.series->attachAxis(axisX);
-  this->DLMCS.series->attachAxis(axisY);
+  if (this->DLMCS.plot_idx == 0)
+    this->chart->addSeries(this->DLMCS.series);
+  
+  this->DLMCS.series->attachAxis(this->axisX);
+  this->DLMCS.series->attachAxis(this->axisY);
+  
+  if (this->DLMCS.plot_idx == 0)
+    this->chart->addSeries(this->DLMCS.seriesMin);
+  this->DLMCS.seriesMin->attachAxis(this->axisX);
+  this->DLMCS.seriesMin->attachAxis(this->axisY);
+  
+  if (this->DLMCS.plot_idx == 0)
+    this->chart->addSeries(this->DLMCS.seriesMax);
+  this->DLMCS.seriesMax->attachAxis(this->axisX);
+  this->DLMCS.seriesMax->attachAxis(this->axisY);
 
-  chart->addSeries(this->DLMCS.seriesMin);
-  this->DLMCS.seriesMin->attachAxis(axisX);
-  this->DLMCS.seriesMin->attachAxis(axisY);
+  if (this->DLMCS.plot_idx == 0)
+    this->chartView->setChart(this->chart);
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  chart->addSeries(this->DLMCS.seriesMax);
-  this->DLMCS.seriesMax->attachAxis(axisX);
-  this->DLMCS.seriesMax->attachAxis(axisY);
-
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
-
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
+  this->previousIndex = 10;
   this->DLMCS.plot_idx++;
-  update();
+  makeConnections();
 }
 
 void PainterWidget::KPI_DL_BLER()
 {
   // erase the previous paint
+  this->chartView->hide();
   this->pix->fill(QColor(240,240,240));
 
   if ((this->DLBLER.plot_idx > this->chartWidth) ||
       (this->indexToPlot != this->previousIndex))
   {
     this->DLBLER.plot_idx = 0;
+    this->chart->removeAllSeries();
     resetKPIPlot(&this->DLBLER);
+    std::cout << this->indexToPlot << ", " << this->previousIndex << std::endl;
   }
 
   float Xpaint, Ypaint;
@@ -1748,48 +2185,49 @@ void PainterWidget::KPI_DL_BLER()
   series_UppLim->append(0, Limits_KPI_ue[0][1]);
   series_UppLim->append(this->chartWidth, Limits_KPI_ue[0][1]);
   series_UppLim->setColor(QColor(255, 0, 0));
-
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  
+  this->chart->legend()->hide();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , this->chartWidth);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , this->chartWidth);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange(-1, 1.5);
-  axisY->setTitleText("DL BLER");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange(-1, 1.5);
+  this->axisY->setTitleText("DL BLER");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(this->DLBLER.series);
+  if(this->DLBLER.plot_idx == 0){
+    this->chart->addSeries(this->DLBLER.series);
+    this->chartView->setChart(this->chart);
+  }
   this->DLBLER.series->attachAxis(axisX);
   this->DLBLER.series->attachAxis(axisY);
 
-  chart->addSeries(series_LowLim);
-  series_LowLim->attachAxis(axisX);
-  series_LowLim->attachAxis(axisY);
+  this->chart->addSeries(series_LowLim);
+  series_LowLim->attachAxis(this->axisX);
+  series_LowLim->attachAxis(this->axisY);
 
-  chart->addSeries(series_UppLim);
-  series_UppLim->attachAxis(axisX);
-  series_UppLim->attachAxis(axisY);
+  this->chart->addSeries(series_UppLim);
+  series_UppLim->attachAxis(this->axisX);
+  series_UppLim->attachAxis(this->axisY);
+  
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
-
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-
-  this->previousIndex = this->parentWindow->currentIndex();
+  this->previousIndex = 8;
+  this->isOpenGLUsed = false;
   this->DLBLER.plot_idx++;
-  update();
+  makeConnections();
 }
 
 void PainterWidget::paintPixmap_ueChannelResponse()
 {
+  this->previousIndex = 7;
   scopeData_t *scope=(scopeData_t *) this->ue->scopeData;
   scope->flag_streaming[pbchDlChEstimateTime] = 1;
 
@@ -1832,6 +2270,7 @@ void PainterWidget::paintPixmap_ueChannelResponse()
   float maxYAbs = std::max(abs(maxY),abs(minY));
 
   QLineSeries *series = new QLineSeries();
+  series->setUseOpenGL(true);
   QColor MarkerColor(255, 0, 0);
   series->setColor(MarkerColor);
 
@@ -1847,46 +2286,38 @@ void PainterWidget::paintPixmap_ueChannelResponse()
     minYScaled=std::min(minYScaled,Ypaint);
   }
 
-  QChart *chart = new QChart();
-  chart->legend()->hide();
+  this->chart->removeAllSeries();
+  this->chart->removeAxis(this->axisX);
+  this->chart->removeAxis(this->axisY);
+  this->chart->legend()->hide();
 
   int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , len);
-  axisX->setTitleText("Time Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
+  this->axisX->setTickCount(nofTicks);
+  this->axisX->setRange(0 , len);
+  this->axisX->setTitleText("Time Index");
+  this->chart->addAxis(this->axisX, Qt::AlignBottom);
 
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
-  axisY->setTitleText("abs Channel");
-  chart->addAxis(axisY, Qt::AlignLeft);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
+  this->axisY->setTitleText("abs Channel");
+  this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
-  chart->addSeries(series);
-  series->attachAxis(axisX);
-  series->attachAxis(axisY);
+  this->chart->addSeries(series);
+  series->attachAxis(this->axisX);
+  series->attachAxis(this->axisY);
 
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
+  this->chartView->setChart(this->chart);
 
-  QPixmap p = chartView->grab();
-  QPainter PixPainter(&p);
-  float freq_offset = (float)this->ue->common_vars.freq_offset;
-  std::string strFreq = "Freq. Offset= " + std::to_string(freq_offset);
-  QString qstrFreq = QString::fromStdString(strFreq);
-  PixPainter.drawText(100, 1.6*maxYScaled, qstrFreq);
-
-  float timing_advance = (float)this->ue->timing_advance;
-  std::string strTime = "Timing Advance= " + std::to_string(timing_advance);
-  QString qstrTime = QString::fromStdString(strTime);
-  PixPainter.drawText(100, 1.3*maxYScaled, qstrTime);
-  *this->pix = p;
-  update(); //call paintEvent()
+  this->isOpenGLUsed = true;
+  this->chartView->resize(this->chartWidth, this->chartHight);
+  this->resize(this->chartWidth, this->chartHight);
+  this->chartView->show();
+  makeConnections();
 }
 
 void PainterWidget::paintPixmap_uePdschIQ()
 {
+  this->previousIndex = 2;
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
 
@@ -1910,70 +2341,10 @@ void PainterWidget::paintPixmap_uePdschIQ()
     base += sz;
   }
 
-  float maxX=0, maxY=0, minX=0, minY=0;
-  for (int k=0; k<base; k++) {
-    maxX=std::max(maxX,I[k]);
-    minX=std::min(minX,I[k]);
-    maxY=std::max(maxY,Q[k]);
-    minY=std::min(minY,Q[k]);
-  }
-  float maxXAbs = std::max(abs(maxX),abs(minX));
-  float maxYAbs = std::max(abs(maxY),abs(minY));
-
-  float Ipaint, Qpaint;
-  QScatterSeries *series = new QScatterSeries();
-  series->setUseOpenGL(true);
-
-  float maxXScaled=0, maxYScaled=0, minXScaled=0, minYScaled=0;
-
-  QVector<QPointF> points(base);   // sz * RX_NB_TH_MAX * sizeof(*I)
-
-  for (int k=0; k<base; k++) { //scale the I/Q samples!
-    Ipaint = I[k]/maxXAbs*50;
-    Qpaint = Q[k]/maxYAbs*50;
-
-    points[k] = QPointF(Ipaint, Qpaint);
-
-    maxXScaled=std::max(maxXScaled,Ipaint);
-    minXScaled=std::min(minXScaled,Ipaint);
-    maxYScaled=std::max(maxYScaled,Qpaint);
-    minYScaled=std::min(minYScaled,Qpaint);
-  }
-
-  series->replace(points);
   QColor MarkerColor(0, 255, 0);
-  series->setColor(MarkerColor);
-  series->setMarkerSize(2);
-  series->setBorderColor(Qt::transparent);
-  series->setMarkerShape(QScatterSeries::MarkerShapeCircle);
-
-  QChart *chart = new QChart();
-  chart->legend()->hide();
-
-  int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange((minXScaled + 0.4*minXScaled) , (maxXScaled + 0.4*maxXScaled));
-  axisX->setTitleText("Real");
-  chart->addAxis(axisX, Qt::AlignBottom);
-
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
-  axisY->setTitleText("Imag");
-  chart->addAxis(axisY, Qt::AlignLeft);
-
-  chart->addSeries(series);
-  series->attachAxis(axisX);
-  series->attachAxis(axisY);
-
-  QChartView *chartView = new QChartView();
-  chartView->resize(this->chartWidth, this->chartHight);
-  chartView->setChart(chart);
-
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-  update(); //call paintEvent()
+  const QString xLabel = QString("Real");
+  const QString yLabel = QString("Img");
+  createScatterPlot(I, Q, base-100, MarkerColor, xLabel, yLabel, true);
 }
 
 void PainterWidget::resizeEvent(QResizeEvent *event)
@@ -1990,7 +2361,7 @@ void PainterWidget::resizeEvent(QResizeEvent *event)
       this->pix = newPix;
       this->pix->fill(QColor(240,240,240));
       this->iteration = 0;
-      this->waterFallh = this->chartHight/3 - 15;
+      this->waterFallh = this->chartHight/2 - 15;
       for (int i=0; i< this->waterFallh; i++)
         this->waterFallAvg[i]=0;
     }
@@ -2002,6 +2373,7 @@ void PainterWidget::resizeEvent(QResizeEvent *event)
 
 void PainterWidget::paintPixmap_uePdcchIQ()
 {
+    this->previousIndex = 4;
     this->pix->fill(QColor(240,240,240));
 
     scopeData_t *scope=(scopeData_t *) this->ue->scopeData;
@@ -2026,99 +2398,15 @@ void PainterWidget::paintPixmap_uePdcchIQ()
       Q[i] = pdcch_comp[i].i;
     }
 
-    float maxX=0, maxY=0, minX=0, minY=0;
-    for (int k=0; k<len; k++) {
-      maxX=std::max(maxX,I[k]);
-      minX=std::min(minX,I[k]);
-      maxY=std::max(maxY,Q[k]);
-      minY=std::min(minY,Q[k]);
-    }
-    float maxXAbs = std::max(abs(maxX),abs(minX));
-    float maxYAbs = std::max(abs(maxY),abs(minY));
-
-    QScatterSeries *series = new QScatterSeries();
-
-    series->setUseOpenGL(true);
-
     QColor MarkerColor(0, 0, 255);
-    series->setColor(MarkerColor);
-    series->setMarkerSize(2);
-    series->setBorderColor(Qt::transparent);
-    series->setMarkerShape(QScatterSeries::MarkerShapeCircle);
-
-    float maxXScaled=0, maxYScaled=0, minXScaled=0, minYScaled=0;
-    float Ipaint, Qpaint;
-
-    QVector<QPointF> points(len);
-
-    for (int k=0; k<len; k++) { //scale the I/Q samples!
-
-      if (abs(maxXAbs - 0.0) > 100e-6)
-        Ipaint = I[k]/maxXAbs*50;
-      else
-        Ipaint = I[k];
-
-      if (abs(maxYAbs - 0.0) > 100e-6)
-        Qpaint = Q[k]/maxYAbs*50;
-      else
-        Qpaint = Q[k];
-
-      //series->append(Ipaint, Qpaint);
-      points[k] = QPointF(Ipaint, Qpaint);
-
-      maxXScaled=std::max(maxXScaled,Ipaint);
-      minXScaled=std::min(minXScaled,Ipaint);
-      maxYScaled=std::max(maxYScaled,Qpaint);
-      minYScaled=std::min(minYScaled,Qpaint);
-    }
-
-    series->replace(points);
-
-    QChart *chart = new QChart();
-    chart->legend()->hide();
-
-    int nofTicks = 6;
-    QValueAxis *axisX = new QValueAxis;
-    axisX->setTickCount(nofTicks);
-    if ( (minXScaled != 0) && (maxXScaled != 0))
-    {
-      axisX->setRange((minXScaled + 0.4*minXScaled) , (maxXScaled + 0.4*maxXScaled));
-    }
-    else
-    {
-      axisX->setRange(-10,10);
-    }
-    axisX->setTitleText("Real");
-    chart->addAxis(axisX, Qt::AlignBottom);
-
-    QValueAxis *axisY = new QValueAxis;
-    axisY->setTickCount(nofTicks);
-    if ((minYScaled != 0) && (maxYScaled != 0))
-    {
-      axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
-    }
-    else
-    {
-      axisY->setRange(-10,10);
-    }
-    axisY->setTitleText("Imag");
-    chart->addAxis(axisY, Qt::AlignLeft);
-
-    chart->addSeries(series);
-    series->attachAxis(axisX);
-    series->attachAxis(axisY);
-
-    QChartView *chartView = new QChartView(chart);
-    chartView->resize(this->chartWidth, this->chartHight);
-
-    QPixmap p = chartView->grab();
-    *this->pix = p;
-
-    update(); //call paintEvent()
+    const QString xLabel = QString("Real");
+    const QString yLabel = QString("Img");
+    createScatterPlot(I, Q, len, MarkerColor, xLabel, yLabel, true);
 }
 
 void PainterWidget::paintPixmap_uePbchIQ()
 {
+    this->previousIndex = 0;
     // erase the previous paint
     this->pix->fill(QColor(240,240,240));
 
@@ -2143,66 +2431,15 @@ void PainterWidget::paintPixmap_uePbchIQ()
       Q[i] = pbch_comp[i].i;
     }
 
-    float maxX=0, maxY=0, minX=0, minY=0;
-    for (int k=0; k<len; k++) {
-      maxX=std::max(maxX,I[k]);
-      minX=std::min(minX,I[k]);
-      maxY=std::max(maxY,Q[k]);
-      minY=std::min(minY,Q[k]);
-    }
-
-    float maxXAbs = std::max(abs(maxX),abs(minX));
-    float maxYAbs = std::max(abs(maxY),abs(minY));
-
-    QScatterSeries *series = new QScatterSeries();
-    series->setUseOpenGL(true);
     QColor MarkerColor(255, 0, 0);
-    series->setColor(MarkerColor);
-    series->setMarkerSize(2);
-    series->setBorderColor(Qt::transparent);
-    series->setMarkerShape(QScatterSeries::MarkerShapeCircle);
-
-    int Ipaint, Qpaint;
-    QVector<QPointF> points(len);
-
-    for (int k=0; k<len; k++) {
-      Ipaint = I[k]/maxXAbs*50;
-      Qpaint = Q[k]/maxYAbs*50;
-
-      points[k] = QPointF(Ipaint, Qpaint);
-    }
-
-    series->replace(points);
-    QChart *chart = new QChart();
-    chart->legend()->hide();
-
-    int nofTicks = 6;
-    QValueAxis *axisX = new QValueAxis;
-    axisX->setTickCount(nofTicks);
-    axisX->setRange((minX + 0.4*minX) , (maxX + 0.4*maxX));
-    axisX->setTitleText("Real");
-    chart->addAxis(axisX, Qt::AlignBottom);
-
-    QValueAxis *axisY = new QValueAxis;
-    axisY->setTickCount(nofTicks);
-    axisY->setRange((minY + 0.4*minY), (maxY + 0.4*maxY));
-    axisY->setTitleText("Imag");
-    chart->addAxis(axisY, Qt::AlignLeft);
-
-    chart->addSeries(series);
-    series->attachAxis(axisX);
-    series->attachAxis(axisY);
-
-    QChartView *chartView = new QChartView(chart);
-    chartView->resize(this->chartWidth, this->chartHight);
-
-    QPixmap p = chartView->grab();
-    *this->pix = p;
-    update(); //call paintEvent()
+    const QString xLabel = QString("Real");
+    const QString yLabel = QString("Img");
+    createScatterPlot(I, Q, len, MarkerColor, xLabel, yLabel, true);
 }
 
 void PainterWidget::paintPixmap_uePdschLLR()
 {
+  this->previousIndex = 3;
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
 
@@ -2230,65 +2467,15 @@ void PainterWidget::paintPixmap_uePdschLLR()
     base+=coded_bits_per_codeword;
   }
 
-  float maxY=0, minY=0;
-  for (int k=0; k<base; k++) {
-    maxY=std::max(maxY,llr[k]);
-    minY=std::min(minY,llr[k]);
-  }
-
-  float maxYAbs = std::max(abs(maxY),abs(minY));
-
-  QScatterSeries *series = new QScatterSeries();
-  series->setUseOpenGL(true);
   QColor MarkerColor(0, 255, 0);
-  series->setColor(MarkerColor);
-  series->setMarkerSize(2);
-  series->setBorderColor(Qt::transparent);
-  series->setMarkerShape(QScatterSeries::MarkerShapeCircle);
-
-  float Xpaint, Ypaint;
-  QVector<QPointF> points(base);
-  float minYScaled=0, maxYScaled=0;
-  for (int k=0; k<base; k++) {
-    Xpaint = bit[k];
-    Ypaint = llr[k]/maxYAbs*50;
-
-    points[k] = QPointF(Xpaint, Ypaint);
-    maxYScaled=std::max(maxYScaled,Ypaint);
-    minYScaled=std::min(minYScaled,Ypaint);
-  }
-
-  series->replace(points);
-  QChart *chart = new QChart();
-  chart->legend()->hide();
-
-  int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , base);
-  axisX->setTitleText("Sample Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
-
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
-  axisY->setTitleText("LLR");
-  chart->addAxis(axisY, Qt::AlignLeft);
-
-  chart->addSeries(series);
-  series->attachAxis(axisX);
-  series->attachAxis(axisY);
-
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
-
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-  update(); //call paintEvent()
+  const QString xLabel = QString("Sample Index");
+  const QString yLabel = QString("LLR");
+  createScatterPlot(bit, llr, base-100, MarkerColor, xLabel, yLabel, false);
 }
 
 void PainterWidget::paintPixmap_uePdcchLLR()
 {
+  this->previousIndex = 5;
   // erase the previous paint
   this->pix->fill(QColor(240,240,240));
 
@@ -2314,65 +2501,15 @@ void PainterWidget::paintPixmap_uePdcchLLR()
     bit[i] = (float) i;
   }
 
-  float maxY=0, minY=0;
-  for (int k=0; k<len; k++) {
-    maxY=std::max(maxY,llr[k]);
-    minY=std::min(minY,llr[k]);
-  }
-  float maxYAbs = std::max(abs(maxY),abs(minY));
-
-  QScatterSeries *series = new QScatterSeries();
-  series->setUseOpenGL(true);
   QColor MarkerColor(0, 0, 255);
-  series->setColor(MarkerColor);
-  series->setMarkerSize(2);
-  series->setBorderColor(Qt::transparent);
-  series->setMarkerShape(QScatterSeries::MarkerShapeCircle);
-
-  float minYScaled=0, maxYScaled=0;
-  float Xpaint, Ypaint;
-
-  QVector<QPointF> points(len);
-  for (int k=0; k<len; k++) {
-    Xpaint = bit[k];
-    Ypaint = llr[k]/maxYAbs*50;
-
-    points[k] = QPointF(Xpaint, Ypaint);
-    maxYScaled=std::max(maxYScaled,Ypaint);
-    minYScaled=std::min(minYScaled,Ypaint);
-  }
-
-  series->replace(points);
-  QChart *chart = new QChart();
-  chart->legend()->hide();
-
-  int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , len);
-  axisX->setTitleText("Sample Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
-
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
-  axisY->setTitleText("LLR");
-  chart->addAxis(axisY, Qt::AlignLeft);
-
-  chart->addSeries(series);
-  series->attachAxis(axisX);
-  series->attachAxis(axisY);
-
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
-
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-  update(); //call paintEvent()
+  const QString xLabel = QString("Sample Index");
+  const QString yLabel = QString("LLR");
+  createScatterPlot(bit, llr, len, MarkerColor, xLabel, yLabel, false);
 }
 
 void PainterWidget::paintPixmap_uePbchLLR()
 {
+  this->previousIndex = 1;
   this->pix->fill(QColor(240,240,240));
 
   scopeData_t *scope=(scopeData_t *) this->ue->scopeData;
@@ -2395,62 +2532,11 @@ void PainterWidget::paintPixmap_uePbchLLR()
     llr[i] = (float) llr_pbch[i];
     bit[i] = (float) i;
   }
-  float maxX=0, maxY=0, minX=0, minY=0;
-  for (int k=0; k<len; k++) {
-    maxX=std::max(maxX,bit[k]);
-    minX=std::min(minX,bit[k]);
-    maxY=std::max(maxY,llr[k]);
-    minY=std::min(minY,llr[k]);
-  }
 
-  float maxYAbs = std::max(abs(maxY),abs(minY));
-  QScatterSeries *series = new QScatterSeries();
-  series->setUseOpenGL(true);
   QColor MarkerColor(255, 0, 0);
-  series->setColor(MarkerColor);
-  series->setMarkerSize(2);
-  series->setMarkerShape(QScatterSeries::MarkerShapeCircle);
-  series->setBorderColor(Qt::transparent);
-
-  QVector<QPointF> points(len);
-  float Xpaint, Ypaint;
-  float minYScaled=0, maxYScaled=0;
-  for (int k=0; k<len; k++) {
-    Xpaint = bit[k];
-    Ypaint = llr[k]/maxYAbs*50;
-
-    points[k] = QPointF(Xpaint, Ypaint);
-    maxYScaled=std::max(maxYScaled,Ypaint);
-    minYScaled=std::min(minYScaled,Ypaint);
-  }
-
-  series->replace(points);
-  QChart *chart = new QChart();
-  chart->legend()->hide();
-
-  int nofTicks = 6;
-  QValueAxis *axisX = new QValueAxis;
-  axisX->setTickCount(nofTicks);
-  axisX->setRange(0 , len);
-  axisX->setTitleText("Sample Index");
-  chart->addAxis(axisX, Qt::AlignBottom);
-
-  QValueAxis *axisY = new QValueAxis;
-  axisY->setTickCount(nofTicks);
-  axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
-  axisY->setTitleText("LLR");
-  chart->addAxis(axisY, Qt::AlignLeft);
-
-  chart->addSeries(series);
-  series->attachAxis(axisX);
-  series->attachAxis(axisY);
-
-  QChartView *chartView = new QChartView(chart);
-  chartView->resize(this->chartWidth, this->chartHight);
-
-  QPixmap p = chartView->grab();
-  *this->pix = p;
-  update(); //call paintEvent()
+  const QString xLabel = QString("Sample Index");
+  const QString yLabel = QString("LLR");
+  createScatterPlot(bit, llr, len, MarkerColor, xLabel, yLabel, false);
 }
 
 void *nrUEQtscopeThread(void *arg)
@@ -2558,7 +2644,6 @@ void *nrgNBQtscopeThread(void *arg)
   // Create a main window (widget)
   QWidget *window = new QWidget();
   window->resize(600, 900);
-
   // Window title
   window->setWindowTitle("gNB Scope");
 
@@ -2713,7 +2798,5 @@ extern "C" void nrqtscope_autoinit(void *dataptr) {
     nrgNBinitQtScope((scopeParms_t *)dataptr);
   else
     nrUEinitQtScope((PHY_VARS_NR_UE *)dataptr);
-
-  //nrUEinitQtScope((PHY_VARS_NR_UE *)dataptr);
-
 }
+
