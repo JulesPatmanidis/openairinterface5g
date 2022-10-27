@@ -103,7 +103,7 @@ int get_tx_harq_id(NR_UE_ULSCH_t *ulsch, int slot_tx);
     @param harq process identifier harq_pid
     @returns retransmission or new transmission */
 
-harq_result_t uplink_harq_process(NR_UE_ULSCH_t *ulsch, int harq_pid, int ndi, uint8_t rnti_type);
+harq_result_t uplink_harq_process(NR_UE_ULSCH_t *ulsch, int harq_pid, NR_UL_UE_HARQ_t harq_processes[NR_MAX_ULSCH_HARQ_PROCESSES], int ndi, uint8_t rnti_type);
 
 /** \brief This function initialises downlink HARQ status
     @param pointer to downlink harq status
