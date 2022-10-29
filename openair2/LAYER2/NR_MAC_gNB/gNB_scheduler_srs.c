@@ -49,15 +49,15 @@ uint32_t max4(uint32_t a, uint32_t b,uint32_t c,uint32_t d) {
   return x;
 }
 
-int nr_srs_ri_computation(const nfapi_nr_srs_normalized_channel_iq_matrix_t *nr_srs_normalized_channel_iq_matrix,
-                          const NR_UE_UL_BWP_t *current_BWP,
-                          uint8_t *ul_ri) {
-
+void nr_srs_ri_computation(const nfapi_nr_srs_normalized_channel_iq_matrix_t *nr_srs_normalized_channel_iq_matrix,
+                           const NR_UE_UL_BWP_t *current_BWP,
+                           uint8_t *ul_ri)
+{
   if (!(nr_srs_normalized_channel_iq_matrix->num_gnb_antenna_elements == 2 &&
         nr_srs_normalized_channel_iq_matrix->num_ue_srs_ports == 2 &&
         current_BWP->pusch_Config && *current_BWP->pusch_Config->maxRank == 2)) {
     *ul_ri = 0;
-    return 0;
+    return;
   }
 
   c16_t *ch = (c16_t*)nr_srs_normalized_channel_iq_matrix->channel_matrix;
@@ -135,7 +135,6 @@ int nr_srs_ri_computation(const nfapi_nr_srs_normalized_channel_iq_matrix_t *nr_
   LOG_I(NR_MAC, "ul_ri = %i (count = %i)\n", (*ul_ri)+1, count);
 #endif
 
-  return 0;
 }
 
 void nr_configure_srs(nfapi_nr_srs_pdu_t *srs_pdu, int module_id, int CC_id,NR_UE_info_t*  UE, NR_SRS_ResourceSet_t *srs_resource_set, NR_SRS_Resource_t *srs_resource) {
