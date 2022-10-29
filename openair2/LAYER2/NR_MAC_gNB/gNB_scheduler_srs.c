@@ -60,14 +60,14 @@ void nr_srs_ri_computation(const nfapi_nr_srs_normalized_channel_iq_matrix_t *nr
     return;
   }
 
-  c16_t *ch = (c16_t*)nr_srs_normalized_channel_iq_matrix->channel_matrix;
-  uint16_t num_gnb_antenna_elements = nr_srs_normalized_channel_iq_matrix->num_gnb_antenna_elements;
-  uint16_t num_prgs = nr_srs_normalized_channel_iq_matrix->num_prgs;
-  uint16_t base00_idx = 0*num_gnb_antenna_elements*num_prgs + 0*num_prgs; // Rx antenna 0, Tx port 0
-  uint16_t base01_idx = 1*num_gnb_antenna_elements*num_prgs + 0*num_prgs; // Rx antenna 0, Tx port 1
-  uint16_t base10_idx = 0*num_gnb_antenna_elements*num_prgs + 1*num_prgs; // Rx antenna 1, Tx port 0
-  uint16_t base11_idx = 1*num_gnb_antenna_elements*num_prgs + 1*num_prgs; // Rx antenna 1, Tx port 1
-  uint8_t bshift = 2;
+  const c16_t *ch = (c16_t *)nr_srs_normalized_channel_iq_matrix->channel_matrix;
+  const uint16_t num_gnb_antenna_elements = nr_srs_normalized_channel_iq_matrix->num_gnb_antenna_elements;
+  const uint16_t num_prgs = nr_srs_normalized_channel_iq_matrix->num_prgs;
+  const uint16_t base00_idx = 0 * num_gnb_antenna_elements * num_prgs + 0 * num_prgs; // Rx antenna 0, Tx port 0
+  const uint16_t base01_idx = 1 * num_gnb_antenna_elements * num_prgs + 0 * num_prgs; // Rx antenna 0, Tx port 1
+  const uint16_t base10_idx = 0 * num_gnb_antenna_elements * num_prgs + 1 * num_prgs; // Rx antenna 1, Tx port 0
+  const uint16_t base11_idx = 1 * num_gnb_antenna_elements * num_prgs + 1 * num_prgs; // Rx antenna 1, Tx port 1
+  const uint8_t bshift = 2;
   const int16_t cond_dB_threshold = 5;
   int count = 0;
 
@@ -78,27 +78,24 @@ void nr_srs_ri_computation(const nfapi_nr_srs_normalized_channel_iq_matrix_t *nr
     *           | conjch01 conjch11 |   | ch10 ch11 |   | conjch01*ch00+conjch11*ch10 conjch01*ch01+conjch11*ch11 |
     */
 
-    c16_t HhxH00 = {(int16_t)(((int32_t)ch[base00_idx+pI].r*ch[base00_idx+pI].r + (int32_t)ch[base00_idx+pI].i*ch[base00_idx+pI].i +
-                        (int32_t)ch[base10_idx+pI].r*ch[base10_idx+pI].r + (int32_t)ch[base10_idx+pI].i*ch[base10_idx+pI].i)>>bshift),
-                    (int16_t)(((int32_t)ch[base00_idx+pI].r*ch[base00_idx+pI].i - (int32_t)ch[base00_idx+pI].i*ch[base00_idx+pI].r +
-                        (int32_t)ch[base10_idx+pI].r*ch[base10_idx+pI].i - (int32_t)ch[base10_idx+pI].i*ch[base10_idx+pI].r)>>bshift)};
+    const c32_t ch00 = {ch[base00_idx + pI].r, ch[base00_idx + pI].i};
+    const c32_t ch01 = {ch[base01_idx + pI].r, ch[base01_idx + pI].i};
+    const c32_t ch10 = {ch[base10_idx + pI].r, ch[base10_idx + pI].i};
+    const c32_t ch11 = {ch[base11_idx + pI].r, ch[base11_idx + pI].i};
 
-    c16_t HhxH01 = {(int16_t)(((int32_t)ch[base00_idx+pI].r*ch[base01_idx+pI].r + (int32_t)ch[base00_idx+pI].i*ch[base01_idx+pI].i +
-                        (int32_t)ch[base10_idx+pI].r*ch[base11_idx+pI].r + (int32_t)ch[base10_idx+pI].i*ch[base11_idx+pI].i)>>bshift),
-                    (int16_t)(((int32_t)ch[base00_idx+pI].r*ch[base01_idx+pI].i - (int32_t)ch[base00_idx+pI].i*ch[base01_idx+pI].r +
-                        (int32_t)ch[base10_idx+pI].r*ch[base11_idx+pI].i - (int32_t)ch[base10_idx+pI].i*ch[base11_idx+pI].r)>>bshift)};
+    c16_t HhxH00 = {(int16_t)((ch00.r * ch00.r + ch00.i * ch00.i + ch10.r * ch10.r + ch10.i * ch10.i) >> bshift),
+                    (int16_t)((ch00.r * ch00.i - ch00.i * ch00.r + ch10.r * ch10.i - ch10.i * ch10.r) >> bshift)};
 
-    c16_t HhxH10 = {(int16_t)(((int32_t)ch[base01_idx+pI].r*ch[base00_idx+pI].r + (int32_t)ch[base01_idx+pI].i*ch[base00_idx+pI].i +
-                        (int32_t)ch[base11_idx+pI].r*ch[base10_idx+pI].r + (int32_t)ch[base11_idx+pI].i*ch[base10_idx+pI].i)>>bshift),
-                    (int16_t)(((int32_t)ch[base01_idx+pI].r*ch[base00_idx+pI].i - (int32_t)ch[base01_idx+pI].i*ch[base00_idx+pI].r +
-                        (int32_t)ch[base11_idx+pI].r*ch[base10_idx+pI].i - (int32_t)ch[base11_idx+pI].i*ch[base10_idx+pI].r)>>bshift)};
+    c16_t HhxH01 = {(int16_t)((ch00.r * ch01.r + ch00.i * ch01.i + ch10.r * ch11.r + ch10.i * ch11.i) >> bshift),
+                    (int16_t)((ch00.r * ch01.i - ch00.i * ch01.r + ch10.r * ch11.i - ch10.i * ch11.r) >> bshift)};
 
-    c16_t HhxH11 = {(int16_t)(((int32_t)ch[base01_idx+pI].r*ch[base01_idx+pI].r + (int32_t)ch[base01_idx+pI].i*ch[base01_idx+pI].i +
-                        (int32_t)ch[base11_idx+pI].r*ch[base11_idx+pI].r + (int32_t)ch[base11_idx+pI].i*ch[base11_idx+pI].i)>>bshift),
-                    (int16_t)(((int32_t)ch[base01_idx+pI].r*ch[base01_idx+pI].i - (int32_t)ch[base01_idx+pI].i*ch[base01_idx+pI].r +
-                        (int32_t)ch[base11_idx+pI].r*ch[base11_idx+pI].i - (int32_t)ch[base11_idx+pI].i*ch[base11_idx+pI].r)>>bshift)};
+    c16_t HhxH10 = {(int16_t)((ch01.r * ch00.r + ch01.i * ch00.i + ch11.r * ch10.r + ch11.i * ch10.i) >> bshift),
+                    (int16_t)((ch01.r * ch00.i - ch01.i * ch00.r + ch11.r * ch10.i - ch11.i * ch10.r) >> bshift)};
 
-    int8_t det_HhxH_dB = dB_fixed(HhxH00.r*HhxH11.r - HhxH00.i*HhxH11.i - HhxH01.r*HhxH10.r + HhxH01.i*HhxH10.i);
+    c16_t HhxH11 = {(int16_t)((ch01.r * ch01.r + ch01.i * ch01.i + ch11.r * ch11.r + ch11.i * ch11.i) >> bshift),
+                    (int16_t)((ch01.r * ch01.i - ch01.i * ch01.r + ch11.r * ch11.i - ch11.i * ch11.r) >> bshift)};
+
+    int8_t det_HhxH_dB = dB_fixed(HhxH00.r * HhxH11.r - HhxH00.i * HhxH11.i - HhxH01.r * HhxH10.r + HhxH01.i * HhxH10.i);
 
     int8_t norm_HhxH_2_dB = dB_fixed(max4(HhxH00.r*HhxH00.r + HhxH00.i*HhxH00.i,
                                           HhxH01.r*HhxH01.r + HhxH01.i*HhxH01.i,
