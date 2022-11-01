@@ -205,6 +205,10 @@ PainterWidgetgNB::PainterWidgetgNB(QComboBox *parent, scopeData_t *p)
     this->chart->addAxis(this->axisX, Qt::AlignBottom);
     this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
+
+    this->previousScalingMin = 200000;   // large enough to be overwritten in the first check
+    this->previousScalingMax = -200000;  // small enough to be overwritten in the first check
+
     // settings for waterfall graph
     this->iteration = 0;
     this->waterFallh = this->chartHight/2 - 15;
@@ -1503,20 +1507,18 @@ void PainterWidgetgNB::createPixMap(float *xData, float *yData, int len, QColor 
   QVector<QPointF> points(len);
 
   float minYScaled=0, maxYScaled=0, maxXScaled = 0, minXScaled = 0;
-  for (int k=0; k<len; k++) {
+  for (int k=0; k<len; k++)
+  {
+    Ypaint = yData[k];
+    Xpaint = xData[k];
 
     if (maxYAbs != 0)
       Ypaint = yData[k]/maxYAbs*50;
-    else
-      Ypaint = yData[k];
 
     if ((maxXAbs != 0) && (scaleX))
       Xpaint = xData[k]/maxXAbs*50;
-    else
-      Xpaint = xData[k];
 
     points[k] = QPointF(Xpaint, Ypaint);
-    //series->append(Xpaint, Ypaint);
     maxYScaled=std::max(maxYScaled,Ypaint);
     minYScaled=std::min(minYScaled,Ypaint);
     maxXScaled=std::max(maxXScaled,Xpaint);
@@ -1531,25 +1533,63 @@ void PainterWidgetgNB::createPixMap(float *xData, float *yData, int len, QColor 
 
   int nofTicks = 6;
   this->axisX->setTickCount(nofTicks);
+  this->axisX->setTitleText(xLabel);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setTitleText(yLabel);
+
   if (!scaleX)
+  {
     this->axisX->setRange(0 , len);
+    if ((minYScaled != 0) && (maxYScaled != 0))
+    {
+      if ((minYScaled < (this->previousScalingMin + 0.4*this->previousScalingMin)) ||
+          (maxYScaled > (this->previousScalingMax + 0.4*this->previousScalingMax)))
+      {
+        this->axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
+        this->previousScalingMax = maxYScaled;
+        this->previousScalingMin = minYScaled;
+        std::cout << minYScaled << ", " << this->previousScalingMin << ", " << maxYScaled << ", " << this->previousScalingMax << std::endl;
+      }
+      else
+      {
+        this->axisY->setRange((this->previousScalingMin + 0.4*this->previousScalingMin),
+        (this->previousScalingMax + 0.4*this->previousScalingMax));
+      }
+    }
+    else
+      this->axisY->setRange(-10, 10);
+  }
   else
   {
-    if ((minXScaled != 0) && (maxXScaled != 0))
-      this->axisX->setRange((minXScaled + 0.4*minXScaled) , (maxXScaled + 0.4*maxXScaled));
+    float maxAbs = std::max(maxXScaled, maxYScaled);
+    float minAbs = std::min(minYScaled, minXScaled);
+    if ((maxAbs != 0) && (minAbs != 0))
+    {
+      if ((minAbs < (this->previousScalingMin + 0.4*this->previousScalingMin)) ||
+          (maxAbs > (this->previousScalingMax + 0.4*this->previousScalingMax)))
+      {
+        this->axisY->setRange((minAbs + 0.4*minAbs), (maxAbs + 0.4*maxAbs));
+        this->axisX->setRange((minAbs + 0.4*minAbs) , (maxAbs + 0.4*maxAbs));
+        this->previousScalingMax = maxYScaled;
+        this->previousScalingMin = minYScaled;
+      }
+      else
+      {
+        this->axisX->setRange((this->previousScalingMin + 0.4*this->previousScalingMin),
+        (this->previousScalingMax + 0.4*this->previousScalingMax));
+        this->axisY->setRange((this->previousScalingMin + 0.4*this->previousScalingMin),
+        (this->previousScalingMax + 0.4*this->previousScalingMax));
+      }
+    }
     else
+    {
+      this->axisY->setRange(-10, 10);
       this->axisX->setRange(-10,10);
+    }
+
   }
 
-  this->axisX->setTitleText(xLabel);
   this->chart->addAxis(this->axisX, Qt::AlignBottom);
-
-  this->axisY->setTickCount(nofTicks);
-  if ((minYScaled != 0) && (maxYScaled != 0))
-    this->axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
-  else
-    this->axisY->setRange(-10, 10);
-  this->axisY->setTitleText(yLabel);
   this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
   this->chart->addSeries(series);
@@ -1648,7 +1688,6 @@ void PainterWidget::resetKPIPlot(KPI_elements *inputStruct)
 {
   inputStruct->series = new QLineSeries();
   inputStruct->series->setColor(QColor(0,0,0));
-  //inputStruct->series->setUseOpenGL(true);
 
   inputStruct->seriesMin = new QLineSeries();
   inputStruct->seriesMin->setColor(QColor(255,0,0));
@@ -1681,6 +1720,8 @@ PainterWidget::PainterWidget(QComboBox *parent, PHY_VARS_NR_UE *ue)
     this->pix = new QPixmap(this->chartWidth,this->chartHight);
     this->pix->fill(QColor(240,240,240));
     this->ue = ue;
+    this->previousScalingMin = 200000;   // large enough to be overwritten in the first check
+    this->previousScalingMax = -200000;  // small enough to be overwritten in the first check
 
     this->parentWindow = parent;
 
@@ -1857,17 +1898,16 @@ void PainterWidget::createScatterPlot(float *xData, float *yData, int len,
   QVector<QPointF> points(len);
 
   float minYScaled=0, maxYScaled=0, maxXScaled = 0, minXScaled = 0;
-  for (int k=0; k<len; k++) {
+  for (int k=0; k<len; k++)
+  {
+    Ypaint = yData[k];
+    Xpaint = xData[k];
 
     if (maxYAbs != 0)
       Ypaint = yData[k]/maxYAbs*50;
-    else
-      Ypaint = yData[k];
 
     if ((maxXAbs != 0) && (scaleX))
       Xpaint = xData[k]/maxXAbs*50;
-    else
-      Xpaint = xData[k];
 
     points[k] = QPointF(Xpaint, Ypaint);
     maxYScaled=std::max(maxYScaled,Ypaint);
@@ -1877,36 +1917,70 @@ void PainterWidget::createScatterPlot(float *xData, float *yData, int len,
   }
 
   series->replace(points);
-  //QChart *chart = new QChart();
   this->chart->removeAllSeries();
   this->chart->removeAxis(this->axisX);
   this->chart->removeAxis(this->axisY);
   this->chart->legend()->hide();
 
   int nofTicks = 6;
-  //QValueAxis *axisX = new QValueAxis;
   this->axisX->setTickCount(nofTicks);
+  this->axisX->setTitleText(xLabel);
+  this->axisY->setTickCount(nofTicks);
+  this->axisY->setTitleText(yLabel);
 
   if (!scaleX)
+  {
     this->axisX->setRange(0 , len);
+    if ((minYScaled != 0) && (maxYScaled != 0))
+    {
+      if ((minYScaled < (this->previousScalingMin + 0.4*this->previousScalingMin)) ||
+          (maxYScaled > (this->previousScalingMax + 0.4*this->previousScalingMax)))
+      {
+        this->axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
+        this->previousScalingMax = maxYScaled;
+        this->previousScalingMin = minYScaled;
+        std::cout << minYScaled << ", " << this->previousScalingMin << ", " << maxYScaled << ", " << this->previousScalingMax << std::endl;
+      }
+      else
+      {
+        this->axisY->setRange((this->previousScalingMin + 0.4*this->previousScalingMin),
+        (this->previousScalingMax + 0.4*this->previousScalingMax));
+      }
+    }
+    else
+      this->axisY->setRange(-10, 10);
+  }
   else
   {
-    if ((minXScaled != 0) && (maxXScaled != 0))
-      this->axisX->setRange((minXScaled + 0.4*minXScaled) , (maxXScaled + 0.4*maxXScaled));
+    float maxAbs = std::max(maxXScaled, maxYScaled);
+    float minAbs = std::min(minYScaled, minXScaled);
+    if ((maxAbs != 0) && (minAbs != 0))
+    {
+      if ((minAbs < (this->previousScalingMin + 0.4*this->previousScalingMin)) ||
+          (maxAbs > (this->previousScalingMax + 0.4*this->previousScalingMax)))
+      {
+        this->axisY->setRange((minAbs + 0.4*minAbs), (maxAbs + 0.4*maxAbs));
+        this->axisX->setRange((minAbs + 0.4*minAbs) , (maxAbs + 0.4*maxAbs));
+        this->previousScalingMax = maxYScaled;
+        this->previousScalingMin = minYScaled;
+      }
+      else
+      {
+        this->axisX->setRange((this->previousScalingMin + 0.4*this->previousScalingMin),
+        (this->previousScalingMax + 0.4*this->previousScalingMax));
+        this->axisY->setRange((this->previousScalingMin + 0.4*this->previousScalingMin),
+        (this->previousScalingMax + 0.4*this->previousScalingMax));
+      }
+    }
     else
+    {
+      this->axisY->setRange(-10, 10);
       this->axisX->setRange(-10,10);
+    }
+
   }
 
-  this->axisX->setTitleText(xLabel);
   this->chart->addAxis(this->axisX, Qt::AlignBottom);
-
-  //QValueAxis *axisY = new QValueAxis;
-  this->axisY->setTickCount(nofTicks);
-  if ((minYScaled != 0) && (maxYScaled != 0))
-    this->axisY->setRange((minYScaled + 0.4*minYScaled), (maxYScaled + 0.4*maxYScaled));
-  else
-    this->axisY->setRange(-10, 10);
-  this->axisY->setTitleText(yLabel);
   this->chart->addAxis(this->axisY, Qt::AlignLeft);
 
   this->chart->addSeries(series);
@@ -2168,7 +2242,6 @@ void PainterWidget::KPI_DL_BLER()
     this->DLBLER.plot_idx = 0;
     this->chart->removeAllSeries();
     resetKPIPlot(&this->DLBLER);
-    std::cout << this->indexToPlot << ", " << this->previousIndex << std::endl;
   }
 
   float Xpaint, Ypaint;
@@ -2247,7 +2320,6 @@ void PainterWidget::paintPixmap_ueChannelResponse()
 
   int idx = 0;
   int nb_ant = 1;
-  int eNB_id = 0;
   for (int ant=0; ant<nb_ant; ant++)
   {
     if (data[ant] != NULL)

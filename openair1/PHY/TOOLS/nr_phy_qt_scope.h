@@ -192,6 +192,8 @@ private:
 	PHY_VARS_NR_UE *ue;
     int indexToPlot;
     int previousIndex;
+    float previousScalingMin;
+    float previousScalingMax;
 };
 
 
@@ -267,6 +269,8 @@ private:
     scopeData_t *p;
     int indexToPlot;
     int previousIndex;
+    float previousScalingMin;
+    float previousScalingMax;
 };
 
 
