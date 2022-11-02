@@ -154,16 +154,12 @@ void init_nr_ue_vars(PHY_VARS_NR_UE *ue,
                      uint8_t abstraction_flag)
 {
 
-  int nb_connected_gNB = 1, gNB_id;
+  int nb_connected_gNB = 1;
 
   ue->Mod_id      = UE_id;
   ue->mac_enabled = 1;
   ue->if_inst     = nr_ue_if_module_init(0);
   ue->dci_thres   = 0;
-
-  // Setting UE mode to NOT_SYNCHED by default
-  for (gNB_id = 0; gNB_id < nb_connected_gNB; gNB_id++)
-    ue->UE_mode[gNB_id] = NOT_SYNCHED;
 
   // initialize all signal buffers
   init_nr_ue_signal(ue, nb_connected_gNB);
@@ -701,12 +697,11 @@ void UE_processing(nr_rxtx_thread_data_t *rxtxD) {
       ul_indication.phy_data      = &phy_data;
       UE->if_inst->ul_indication(&ul_indication);
     }
-    if (UE->UE_mode[gNB_id] <= PUSCH) {
-      pucch_procedures_ue_nr(UE,
-                             gNB_id,
-                             proc,
-                             &phy_data);
-    }
+
+    pucch_procedures_ue_nr(UE,
+                           gNB_id,
+                           proc,
+                           &phy_data);
 
     LOG_D(PHY, "Sending Uplink data \n");
     nr_ue_pusch_common_procedures(UE,
@@ -714,8 +709,7 @@ void UE_processing(nr_rxtx_thread_data_t *rxtxD) {
                                   &UE->frame_parms,
                                   UE->frame_parms.nb_antennas_tx);
 
-    if (UE->UE_mode[gNB_id] > NOT_SYNCHED && UE->UE_mode[gNB_id] < PUSCH)
-      nr_ue_prach_procedures(UE, proc, proc->gNB_id);
+    nr_ue_prach_procedures(UE, proc, proc->gNB_id);
   }
 
   ue_ta_procedures(UE, proc->nr_slot_tx, proc->frame_tx);
