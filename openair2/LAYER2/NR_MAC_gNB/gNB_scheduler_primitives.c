@@ -2224,6 +2224,13 @@ void set_max_fb_time(NR_UE_UL_BWP_t *UL_BWP, const NR_UE_DL_BWP_t *DL_BWP)
   }
 }
 
+void reset_sched_ctrl(NR_UE_sched_ctrl_t *sched_ctrl)
+{
+  sched_ctrl->srs_feedback.ul_ri = 0;
+  sched_ctrl->srs_feedback.tpmi = 0;
+  sched_ctrl->srs_feedback.sri = 0;
+}
+
 // main function to configure parameters of current BWP
 void configure_UE_BWP(gNB_MAC_INST *nr_mac,
                       NR_ServingCellConfigCommon_t *scc,
@@ -2391,6 +2398,10 @@ void configure_UE_BWP(gNB_MAC_INST *nr_mac,
     UL_BWP->pucch_ConfigCommon = scc->uplinkConfigCommon->initialUplinkBWP->pucch_ConfigCommon->choice.setup;
 
   if(UE) {
+
+    // Reset required fields in sched_ctrl (e.g. ul_ri and tpmi)
+    reset_sched_ctrl(sched_ctrl);
+
     // setting PDCCH related structures for sched_ctrl
     sched_ctrl->search_space = get_searchspace(scc,
                                                bwpd,
@@ -3001,10 +3012,6 @@ void nr_mac_update_timers(module_id_t module_id,
           // add all available DL HARQ processes for this UE in SA
           create_dl_harq_list(sched_ctrl, UE->current_DL_BWP.pdsch_servingcellconfig);
         }
-
-        sched_ctrl->srs_feedback.ul_ri = 0;
-        sched_ctrl->srs_feedback.tpmi = 0;
-        sched_ctrl->srs_feedback.sri = 0;
       }
     }
 
