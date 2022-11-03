@@ -263,7 +263,7 @@ void nr_processULSegment(void* arg) {
   //////////////////////////// ulsch_llr =====> ulsch_harq->e //////////////////////////////
 
   /// code blocks after bit selection in rate matching for LDPC code (38.212 V15.4.0 section 5.4.2.1)
-  int16_t harq_e[3*8448];
+  int16_t harq_e[E];
 
   nr_deinterleaving_ldpc(E,
                          Qm,
@@ -605,7 +605,7 @@ uint32_t nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
     t_nrLDPC_time_stats procTime = {0};
     t_nrLDPC_time_stats* p_procTime     = &procTime ;
     /// code blocks after bit selection in rate matching for LDPC code (38.212 V15.4.0 section 5.4.2.1)
-    int16_t harq_e[3*8448];
+    int16_t harq_e[E];
 
     nr_deinterleaving_ldpc(E,
 			   Qm,
