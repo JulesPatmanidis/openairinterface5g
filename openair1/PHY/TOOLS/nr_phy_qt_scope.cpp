@@ -2394,29 +2394,27 @@ void PainterWidget::paintPixmap_uePdschIQ()
   this->pix->fill(QColor(240,240,240));
 
   //paint the axis and I/Q samples
-  if (!this->ue->pdsch_vars[0][0]->rxdataF_comp0[0])
+  if (!this->ue->pdsch_vars[0]->rxdataF_comp0[0])
       return;
 
   NR_DL_FRAME_PARMS *frame_parms = &this->ue->frame_parms;
-  int sz=7*2*frame_parms->N_RB_DL*12; // size of the malloced buffer
-  int base = 0;
+  int sz = frame_parms->symbols_per_slot*frame_parms->N_RB_DL*12; // size of the malloced buffer
+  scopeSample_t *pdsch_comp = (scopeSample_t *) this->ue->pdsch_vars[0]->rxdataF_comp0[0];
+
   float *I, *Q;
-  float FIinit[sz * RX_NB_TH_MAX * sizeof(*I)] = { 0 }, FQinit[sz * RX_NB_TH_MAX * sizeof(*Q)] = { 0 };
+  float FIinit[sz] = { 0 }, FQinit[sz] = { 0 };
   I = FIinit;
   Q = FQinit;
-  for (int thr=0 ; thr < RX_NB_TH_MAX ; thr ++ ) {
-    scopeSample_t *pdsch_comp = (scopeSample_t *) this->ue->pdsch_vars[thr][0]->rxdataF_comp0[0];
-    for (int s=0; s<sz; s++) {
-      I[s+base] += pdsch_comp[s].r;
-      Q[s+base] += pdsch_comp[s].i;
-    }
-    base += sz;
+
+  for (int s=0; s<sz; s++) {
+    I[s] += pdsch_comp[s].r;
+    Q[s] += pdsch_comp[s].i;
   }
 
   QColor MarkerColor(0, 255, 0);
   const QString xLabel = QString("Real");
   const QString yLabel = QString("Img");
-  createScatterPlot(I, Q, base-100, MarkerColor, xLabel, yLabel, true);
+  createScatterPlot(I, Q, sz, MarkerColor, xLabel, yLabel, true);
 }
 
 void PainterWidget::resizeEvent(QResizeEvent *event)
@@ -2516,33 +2514,29 @@ void PainterWidget::paintPixmap_uePdschLLR()
   this->pix->fill(QColor(240,240,240));
 
   //paint the axis and LLR values
-  if (!this->ue->pdsch_vars[0][0]->llr[0])
+  if (!this->ue->pdsch_vars[0]->llr[0])
       return;
 
-  int num_re = 4500;
+  NR_DL_FRAME_PARMS *frame_parms = &this->ue->frame_parms;
+  int num_re = frame_parms->N_RB_DL*12*frame_parms->symbols_per_slot;
   int Qm = 2;
   int coded_bits_per_codeword = num_re*Qm;
   float *llr, *bit;
-  float FBitinit[coded_bits_per_codeword * RX_NB_TH_MAX ] = { 0 }, FLlrinit[coded_bits_per_codeword * RX_NB_TH_MAX] = { 0 };
+  float FBitinit[coded_bits_per_codeword] = { 0 }, FLlrinit[coded_bits_per_codeword] = { 0 };
   bit = FBitinit;
   llr = FLlrinit;
 
-  int base=0;
-  for (int thr=0 ; thr < RX_NB_TH_MAX ; thr ++ )
+  int16_t *pdsch_llr = (int16_t *) this->ue->pdsch_vars[0]->llr[0]; // stream 0
+  for (int i=0; i<coded_bits_per_codeword; i++)
   {
-    int16_t *pdsch_llr = (int16_t *) this->ue->pdsch_vars[thr][0]->llr[0]; // stream 0
-    for (int i=0; i<coded_bits_per_codeword; i++)
-    {
-      llr[base+i] = (float) pdsch_llr[i];
-      bit[base+i] = (float) base+i;
-    }
-    base+=coded_bits_per_codeword;
+    llr[i] = (float) pdsch_llr[i];
+    bit[i] = (float) i;
   }
 
   QColor MarkerColor(0, 255, 0);
   const QString xLabel = QString("Sample Index");
   const QString yLabel = QString("LLR");
-  createScatterPlot(bit, llr, base-100, MarkerColor, xLabel, yLabel, false);
+  createScatterPlot(bit, llr, coded_bits_per_codeword, MarkerColor, xLabel, yLabel, false);
 }
 
 void PainterWidget::paintPixmap_uePdcchLLR()

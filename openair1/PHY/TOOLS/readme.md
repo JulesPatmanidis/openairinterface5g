@@ -13,9 +13,9 @@ phy_scope_gNB(0, phy_vars_gnb, phy_vars_ru, UE_id)
 
 # Qt-based Scope
 ## Building Instuctions
-For the new qt-based scopo designed for NR, please consider the following:
+For the new qt-based scope designed for NR, please consider the following:
 
-1. run the gNB or the UE with the option '--dqt'. 
+1. run the gNB or the UE with the option '--dqt'.
 2. make sure to install the Qt5 packages before running the scope. Otherwise, the scope will NOT be displayed!
 3. if you need only to build the new scope, then add 'nrqtscope' after the '--lib-build' option. So, the complete
    command would be

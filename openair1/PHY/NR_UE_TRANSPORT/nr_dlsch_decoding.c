@@ -64,10 +64,6 @@ notifiedFIFO_t freeBlocks_dl;
 notifiedFIFO_elt_t *msgToPush_dl;
 int nbDlProcessing =0;
 
-
-static  tpool_t pool_dl;
-//extern double cpuf;
-
 void getKPIUE(extended_kpi_ue* kpiStructure)
 {
   float dl_bler = 1.0;
@@ -79,24 +75,6 @@ void getKPIUE(extended_kpi_ue* kpiStructure)
   kpiStructure->blockSize = blockSize;
   kpiStructure->dl_mcs = dl_mcs;
   kpiStructure->nofRBs = nofRBs;
-}
-
-void init_dlsch_tpool(uint8_t num_dlsch_threads) {
-  char *params = NULL;
-
-  if( num_dlsch_threads==0) {
-    params = calloc(1,2);
-    memcpy(params,"N",1);
-  }
-  else {
-    params = calloc(1,(num_dlsch_threads*3)+1);
-    for (int i=0; i<num_dlsch_threads; i++) {
-      memcpy(params+(i*3),"-1,",3);
-    }
-  }
-
-  initNamedTpool(params, &pool_dl, false,"dlsch");
-  free(params);
 }
 
 void free_nr_ue_dlsch(NR_UE_DLSCH_t **dlschptr, uint16_t N_RB_DL) {
@@ -299,6 +277,12 @@ void nr_processDLSegment(void* arg) {
   short* dlsch_llr = rdata->dlsch_llr;
   rdata->decodeIterations = dlsch->max_ldpc_iterations + 1;
   int8_t llrProcBuf[OAI_UL_LDPC_MAX_NUM_LLR] __attribute__ ((aligned(32)));
+  p_decoderParms->R = nr_get_R_ldpc_decoder(rdata->rv_index,
+                                            E,
+                                            p_decoderParms->BG,
+                                            p_decoderParms->Z,
+                                            &harq_process->llrLen,
+                                            harq_process->DLround);
 
   int16_t  z [68*384 + 16] __attribute__ ((aligned(16)));
   int8_t   l [68*384 + 16] __attribute__ ((aligned(16)));
@@ -524,25 +508,9 @@ uint32_t nr_dlsch_decoding(PHY_VARS_NR_UE *phy_vars_ue,
   if ((A <=292) || ((A <= NR_MAX_PDSCH_TBS) && (Coderate <= 0.6667)) || Coderate <= 0.25) {
     p_decParams->BG = 2;
     kc = 52;
-
-    if (Coderate < 0.3333) {
-      p_decParams->R = 15;
-    } else if (Coderate <0.6667) {
-      p_decParams->R = 13;
-    } else {
-      p_decParams->R = 23;
-    }
   } else {
     p_decParams->BG = 1;
     kc = 68;
-
-    if (Coderate < 0.6667) {
-      p_decParams->R = 13;
-    } else if (Coderate <0.8889) {
-      p_decParams->R = 23;
-    } else {
-      p_decParams->R = 89;
-    }
   }
 
   if (harq_process->first_rx == 1) {
