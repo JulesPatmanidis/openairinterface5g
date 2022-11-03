@@ -1961,7 +1961,7 @@ void nr_rx_pusch(PHY_VARS_gNB *gNB,
 
   int off = ((rel15_ul->rb_size&1) == 1)? 4:0;
   uint32_t rxdataF_ext_offset = 0;
-  uint8_t ad_shift = 1 + log2_approx(frame_parms->nb_antennas_rx >> 2);
+  uint8_t ad_shift = 1 + log2_approx(frame_parms->nb_antennas_rx >> 2) + (rel15_ul->nrOfLayers == 2);
 
   for(uint8_t symbol = rel15_ul->start_symbol_index; symbol < (rel15_ul->start_symbol_index + rel15_ul->nr_of_symbols); symbol++) {
     uint8_t dmrs_symbol_flag = (rel15_ul->ul_dmrs_symb_pos >> symbol) & 0x01;
@@ -2078,9 +2078,10 @@ void nr_rx_pusch(PHY_VARS_gNB *gNB,
                                          symbol,
                                          nb_re_pusch);
 
-        apply_shift((c16_t *)&gNB->pusch_vars[ulsch_id]->rxdataF_comp[frame_parms->nb_antennas_rx][symbol * (off + rel15_ul->rb_size * NR_NB_SC_PER_RB)],
-                    rel15_ul->rb_size * NR_NB_SC_PER_RB,
-                    3);
+        if (rel15_ul->qam_mod_order != 2)
+          apply_shift((c16_t *)&gNB->pusch_vars[ulsch_id]->rxdataF_comp[frame_parms->nb_antennas_rx][symbol * (off + rel15_ul->rb_size * NR_NB_SC_PER_RB)],
+                      rel15_ul->rb_size * NR_NB_SC_PER_RB,
+                      3);
       }
 
       stop_meas(&gNB->ulsch_mrc_stats);
