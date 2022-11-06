@@ -131,8 +131,12 @@ public:
     void makeConnections();
     void resetKPIPlot(KPI_elements *inputStruct);
     void resetKPIValues(KPI_elements *inputStruct);
-    void createScatterPlot(float *xData, float *yData, int len, QColor MarkerColor, const QString xLabel, 
+    void createScatterPlot(float *xData, float *yData, int len, QColor MarkerColor, const QString xLabel,
                            const QString yLabel, bool scaleX);
+
+    void initialCheck(KPI_elements *inputStruct, bool maxMin);
+    void createDynamicMap(KPI_elements *inputStruct, const QString xLabel, const QString yLabel, int thresholdIdx,
+                          bool limitY);
 
     void KPI_configurations();
     QPixmap *pix;
@@ -210,6 +214,9 @@ public:
     void resetKPIPlot(KPI_elements *inputStruct);
     void resetKPIValues(KPI_elements *inputStruct);
     void KPI_configurations();
+    void createDynamicMap(KPI_elements *inputStruct, const QString xLabel, const QString yLabel, int thresholdIdx,
+                          bool limitY);
+    void initialCheck(KPI_elements *inputStruct, bool maxMin);
 
     QPixmap *pix;
     QTimer *timer;
