@@ -30,6 +30,7 @@ void print_shorts(char *s,__m128i *x);
 void print_bytes(char *s,__m128i *x);
 #endif
 
+// WARNING: the OAI historical name is dot_product but it is not: it is sum(x*y) not, sum(x*conjugate(y))
 c32_t dot_product(c16_t *x,
                   c16_t *y,
                   uint32_t N, // must be a multiple of 8
@@ -37,7 +38,6 @@ c32_t dot_product(c16_t *x,
 {
 #if defined(__x86_64__) || defined(__i386__)
 #if defined(__AVX2__)
-  AssertFatal(N % 8 == 0, "");
   const int16_t reflip[32] __attribute__((aligned(32))) = {1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1};
   const int8_t imshuffle[64] __attribute__((aligned(32))) = {2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9, 14, 15, 12, 13, 18, 19, 16, 17, 22, 23, 20, 21, 26, 27, 24, 25, 30, 31, 28, 29};
   c16_t *end = x + N;
@@ -62,6 +62,14 @@ c32_t dot_product(c16_t *x,
   c32_t ret;
   ret.r = _mm256_extract_epi32(cumul, 0) + _mm256_extract_epi32(cumul, 4);
   ret.i = _mm256_extract_epi32(cumul, 1) + _mm256_extract_epi32(cumul, 5);
+  if (x!=end) {
+    x-=8;
+    y-=8;
+    for ( ; x <end; x++,y++ ) {
+      ret.r += ((x->r*y->r)>>output_shift) + ((x->i*y->i)>>output_shift);
+      ret.i += ((x->r*y->i)>>output_shift) - ((x->i*y->r)>>output_shift);
+    }
+  }
   return ret;
 #else
   uint32_t n;
