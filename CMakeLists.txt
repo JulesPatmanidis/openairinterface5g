@@ -24,7 +24,15 @@
 cmake_minimum_required (VERSION 3.5)
 project (OpenAirInterface LANGUAGES C CXX)
 
-include("cmake_targets/macros.cmake")
+#########################################################
+# Base directories, compatible with legacy OAI building #
+#########################################################
+set (OPENAIR_DIR     $ENV{OPENAIR_DIR})
+if("${OPENAIR_DIR}" STREQUAL "")
+  string(REGEX REPLACE "/cmake_targets.*$" "" OPENAIR_DIR ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
+include("${OPENAIR_DIR}/cmake_targets/macros.cmake")
 
 # System packages that are required
 # We use either the cmake buildin, in ubuntu are in: /usr/share/cmake*/Modules/
@@ -140,14 +148,6 @@ elseif(EXISTS "/usr/include/x86_64-linux-gnu/cblas.h")
   
 else()
   message("No Blas/Atlas libs found, some targets will fail")
-endif()
-
-#########################################################
-# Base directories, compatible with legacy OAI building #
-#########################################################
-set (OPENAIR_DIR     $ENV{OPENAIR_DIR})
-if("${OPENAIR_DIR}" STREQUAL "")
-  string(REGEX REPLACE "/cmake_targets.*$" "" OPENAIR_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
 set (NFAPI_DIR       ${OPENAIR_DIR}/nfapi/open-nFAPI)
@@ -3186,4 +3186,14 @@ make_driver(ue_ip ${OPENAIR2_DIR}/NETWORK_DRIVER/UE_IP ${ue_ip_src})
 include (${OPENAIR_DIR}/common/utils/telnetsrv/telnetsrv_CMakeLists.txt)
 include(${OPENAIR1_DIR}/PHY/CODING/nrLDPC_decoder/nrLDPC_tools/CMakeLists.txt)
 
-add_subdirectory(openair2)
+add_subdirectory(${OPENAIR2_DIR})
+
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+configure_file(${OPENAIR_DIR}/doc/Doxyfile ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+add_custom_target(doc
+${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+COMMENT "Generating API documentation with Doxygen" VERBATIM
+)
+endif(DOXYGEN_FOUND)
