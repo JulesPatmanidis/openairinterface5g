@@ -1861,6 +1861,11 @@ int random_channel(channel_desc_t *desc, uint8_t abstraction_flag) {
   if (abstraction_flag==0) {
     start_meas(&desc->interp_time);
 
+    struct complexd cexp_doppler[desc->channel_length];
+    if (desc->max_Doppler != 0.0) {
+      get_cexp_doppler(cexp_doppler, desc);
+    }
+
     for (aarx=0; aarx<desc->nb_rx; aarx++) {
       for (aatx=0; aatx<desc->nb_tx; aatx++) {
         if (desc->channel_length == 1) {
@@ -1891,6 +1896,24 @@ int random_channel(channel_desc_t *desc, uint8_t abstraction_flag) {
 #ifdef DEBUG_CH
             printf("(%d,%d,%d)->(%e,%e)\n",k,aarx,aatx,desc->ch[aarx+(aatx*desc->nb_rx)][k].r,desc->ch[aarx+(aatx*desc->nb_rx)][k].i);
 #endif
+
+            if (desc->max_Doppler != 0.0) {
+              // Apply Doppler effect
+              struct complexd tmp_ch;
+              tmp_ch.r = desc->ch[aarx + (aatx * desc->nb_rx)][k].r * cexp_doppler[k].r - desc->ch[aarx + (aatx * desc->nb_rx)][k].i * cexp_doppler[k].i;
+              tmp_ch.i = desc->ch[aarx + (aatx * desc->nb_rx)][k].r * cexp_doppler[k].i + desc->ch[aarx + (aatx * desc->nb_rx)][k].i * cexp_doppler[k].r;
+              desc->ch[aarx + (aatx * desc->nb_rx)][k].r = tmp_ch.r;
+              desc->ch[aarx + (aatx * desc->nb_rx)][k].i = tmp_ch.i;
+            }
+
+#ifdef DOPPLER_DEBUG
+            printf("[k %2i] cexp_doppler = (%7.4f, %7.4f), abs(cexp_doppler) = %.4f\n",
+                   k,
+                   cexp_doppler[k].r,
+                   cexp_doppler[k].i,
+                   sqrt(cexp_doppler[k].r * cexp_doppler[k].r + cexp_doppler[k].i * cexp_doppler[k].i));
+#endif
+
           } //channel_length
 #ifdef DEBUG_CH_POWER
           ch_power_count++;
