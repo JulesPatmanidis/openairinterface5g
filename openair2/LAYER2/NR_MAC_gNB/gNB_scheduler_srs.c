@@ -53,6 +53,9 @@ void nr_srs_ri_computation(const nfapi_nr_srs_normalized_channel_iq_matrix_t *nr
                            const NR_UE_UL_BWP_t *current_BWP,
                            uint8_t *ul_ri)
 {
+  // If the gNB or UE has 1 antenna, the rank is always 1, i.e., *ul_ri = 0.
+  // For 2x2 scenario, we compute the rank of channel.
+  // The computation for 2x4, 4x2, 4x4, ... scenarios are not implemented yet. In these cases, the function sets *ul_ri = 0, which is always a valid value.
   if (!(nr_srs_normalized_channel_iq_matrix->num_gnb_antenna_elements == 2 &&
         nr_srs_normalized_channel_iq_matrix->num_ue_srs_ports == 2 &&
         current_BWP->pusch_Config && *current_BWP->pusch_Config->maxRank == 2)) {
