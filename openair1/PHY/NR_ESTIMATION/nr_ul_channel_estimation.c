@@ -208,7 +208,6 @@ int nr_pusch_channel_estimation(PHY_VARS_gNB *gNB,
   }
 
 #endif
-  const uint8_t b_shift = 1;
 
   for (int aarx=0; aarx<gNB->frame_parms.nb_antennas_rx; aarx++) {
     c16_t *rxdataF = (c16_t *)&gNB->common_vars.rxdataF[aarx][symbol_offset];
@@ -240,7 +239,7 @@ int nr_pusch_channel_estimation(PHY_VARS_gNB *gNB,
           ch=c32x16maddShift(*pil,
                              rxdataF[soffset + re_offset],
                              ch,
-                             15+b_shift);
+                             16);
           pil++;
         }
 
