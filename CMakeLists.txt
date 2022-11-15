@@ -349,6 +349,7 @@ add_boolean_option(UE_AUTOTEST_TRACE   False "Activate UE autotest specific logs
 add_boolean_option(UE_DEBUG_TRACE      False "Activate UE debug trace")
 add_boolean_option(UE_TIMING_TRACE     False "Activate UE timing trace")
 add_boolean_option(DEBUG_CONSOLE       False "disables stdout/stderr buffering")
+add_boolean_option(LATSEQ              False "Activate Latency Sequence tool")
 
 set (OCP_ITTI ${OPENAIR_DIR}/common/utils/ocp_itti)
 add_library(ITTI
@@ -1264,6 +1265,7 @@ add_library(UTIL
   ${OPENAIR_DIR}/common/utils/backtrace.c
   ${OPENAIR_DIR}/common/utils/time_meas.c
   ${OPENAIR_DIR}/common/utils/time_stat.c
+  ${OPENAIR_DIR}/common/utils/LATSEQ/latseq.c
 )
 
 set(SECU_OSA_SRC
@@ -1771,6 +1773,7 @@ set(PHY_MEX_UE
   ${OPENAIR_DIR}/common/utils/LOG/log.c
   ${OPENAIR_DIR}/common/utils/T/T.c
   ${OPENAIR_DIR}/common/utils/T/local_tracer.c
+  ${OPENAIR_DIR}/common/utils/LATSEQ/latseq.c
   )
 add_library(PHY_MEX ${PHY_MEX_UE} ${CONFIG_LIB})
 
