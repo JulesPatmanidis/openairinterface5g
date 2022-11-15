@@ -1843,7 +1843,13 @@ uint8_t nr_ulsch_zero_forcing_rx_2layers(int **rxdataF_comp,
                                determ_fin_128[0]);
 
     rxdataF_comp128_0[0] = mmtmpD0;
-    rxdataF_comp128_1[0] = mmtmpD1;
+    if (mod_order > 2) {
+      // We need to check why it is a shift of 3
+      rxdataF_comp128_1[0] = _mm_srai_epi16(mmtmpD1, 3);
+    } else {
+      rxdataF_comp128_1[0] = mmtmpD1;
+    }
+
 #ifdef DEBUG_DLSCH_DEMOD
     printf("\n Rx signal after ZF l%d rb%d\n",symbol,rb);
     print_shorts(" Rx layer 1:",(int16_t*)&rxdataF_comp128_0[0]);
@@ -1865,13 +1871,6 @@ uint8_t nr_ulsch_zero_forcing_rx_2layers(int **rxdataF_comp,
 }
 
 //==============================================================================================
-
-void apply_shift(c16_t *rxdataF_comp, const uint16_t n_re, const uint8_t shift) {
-  for (int re = 0; re<n_re; re++) {
-    rxdataF_comp[re].r = rxdataF_comp[re].r >> shift;
-    rxdataF_comp[re].i = rxdataF_comp[re].i >> shift;
-  }
-}
 
 /* Main Function */
 void nr_rx_pusch(PHY_VARS_gNB *gNB,
@@ -2077,11 +2076,6 @@ void nr_rx_pusch(PHY_VARS_gNB *gNB,
                                          gNB->pusch_vars[ulsch_id]->log2_maxh,
                                          symbol,
                                          nb_re_pusch);
-
-        if (rel15_ul->qam_mod_order != 2)
-          apply_shift((c16_t *)&gNB->pusch_vars[ulsch_id]->rxdataF_comp[frame_parms->nb_antennas_rx][symbol * (off + rel15_ul->rb_size * NR_NB_SC_PER_RB)],
-                      rel15_ul->rb_size * NR_NB_SC_PER_RB,
-                      3);
       }
 
       stop_meas(&gNB->ulsch_mrc_stats);
