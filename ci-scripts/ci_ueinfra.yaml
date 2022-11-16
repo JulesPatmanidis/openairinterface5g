@@ -43,7 +43,7 @@ amarisoft_ue:
   ID: amarisoft_ue
   State : enabled
   Kind : amarisoft
-  HostIPAddress : 192.168.18.89
+  HostIPAddress : 172.21.16.144
   HostUsername : root
   HostPassword : toor 
   Process : 

@@ -419,6 +419,12 @@ class OaiCiTest():
 		else: #if an ID is specified, it is a UE from the yaml infrastructure file
 			ue_kind = InfraUE.ci_ue_infra[self.ue_id]['Kind']
 			logging.debug("Detected UE Kind : " + ue_kind)
+			module_ue = cls_module_ue.Module_UE(InfraUE.ci_ue_infra[self.ue_id])
+			module_ue.ue_trace = ue_trace
+			is_module=module_ue.TriggerUE()
+			if is_module:
+				module_ue.EnableTrace()
+				time.sleep(20)
 			"""
 			#case it is a quectel module (only 1 at a time supported at the moment)
 			if ue_kind == 'quectel':

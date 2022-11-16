@@ -28,10 +28,12 @@
 	<TestCaseRequestedList>
  040000
  000001
+ 010000
  010001
  010002
- 010000
  000002
+ 010100
+ 010200
  050000
  080000
 	</TestCaseRequestedList>
@@ -40,9 +42,14 @@
 	<testCase id="010000">
 		<class>Initialize_UE</class>
 		<desc>Run AS UE Scenario</desc>
-		<id>amarisoft_ue_1</id>
+		<id>amarisoft_ue</id>
 	</testCase>
         <testCase id="010001">
+		<class>Attach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_1</id>
+        </testCase>
+        <testCase id="010002">
 		<class>Attach_UE</class>
 		<desc>Run UE</desc>
 		<id>amarisoft_ue_2</id>
@@ -81,11 +88,6 @@
 		<class>Attach_UE</class>
 		<desc>Run UE</desc>
 		<id>amarisoft_ue_9</id>
-        </testCase>
-        <testCase id="010010">
-		<class>Attach_UE</class>
-		<desc>Run UE</desc>
-		<id>amarisoft_ue_10</id>
         </testCase>
         <testCase id="010100">
 		<class>Detach_UE</class>
