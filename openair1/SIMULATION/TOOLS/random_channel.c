@@ -1897,14 +1897,8 @@ int random_channel(channel_desc_t *desc, uint8_t abstraction_flag) {
             printf("(%d,%d,%d)->(%e,%e)\n",k,aarx,aatx,desc->ch[aarx+(aatx*desc->nb_rx)][k].r,desc->ch[aarx+(aatx*desc->nb_rx)][k].i);
 #endif
 
-            if (desc->max_Doppler != 0.0) {
-              // Apply Doppler effect
-              struct complexd tmp_ch;
-              tmp_ch.r = desc->ch[aarx + (aatx * desc->nb_rx)][k].r * cexp_doppler[k].r - desc->ch[aarx + (aatx * desc->nb_rx)][k].i * cexp_doppler[k].i;
-              tmp_ch.i = desc->ch[aarx + (aatx * desc->nb_rx)][k].r * cexp_doppler[k].i + desc->ch[aarx + (aatx * desc->nb_rx)][k].i * cexp_doppler[k].r;
-              desc->ch[aarx + (aatx * desc->nb_rx)][k].r = tmp_ch.r;
-              desc->ch[aarx + (aatx * desc->nb_rx)][k].i = tmp_ch.i;
-            }
+            if (desc->max_Doppler != 0.0)
+              desc->ch[aarx + (aatx * desc->nb_rx)][k] = cdMul(desc->ch[aarx + (aatx * desc->nb_rx)][k], cexp_doppler[k]);
 
 #ifdef DOPPLER_DEBUG
             printf("[k %2i] cexp_doppler = (%7.4f, %7.4f), abs(cexp_doppler) = %.4f\n",
