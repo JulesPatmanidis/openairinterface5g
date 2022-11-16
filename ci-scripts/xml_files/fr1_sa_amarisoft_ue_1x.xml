@@ -28,6 +28,8 @@
 	<TestCaseRequestedList>
  040000
  000001
+ 010001
+ 010002
  010000
  000002
  050000
@@ -40,7 +42,61 @@
 		<desc>Run AS UE Scenario</desc>
 		<id>amarisoft_ue_1</id>
 	</testCase>
-
+        <testCase id="010001">
+		<class>Attach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_2</id>
+        </testCase>
+        <testCase id="010003">
+		<class>Attach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_3</id>
+        </testCase>
+        <testCase id="010004">
+		<class>Attach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_4</id>
+        </testCase>
+        <testCase id="010005">
+		<class>Attach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_5</id>
+        </testCase>
+        <testCase id="010006">
+		<class>Attach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_6</id>
+        </testCase>
+        <testCase id="010007">
+		<class>Attach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_7</id>
+        </testCase>
+        <testCase id="010008">
+		<class>Attach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_8</id>
+        </testCase>
+        <testCase id="010009">
+		<class>Attach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_9</id>
+        </testCase>
+        <testCase id="010010">
+		<class>Attach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_10</id>
+        </testCase>
+        <testCase id="010100">
+		<class>Detach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_1</id>
+        </testCase>
+        <testCase id="010200">
+		<class>Detach_UE</class>
+		<desc>Run UE</desc>
+		<id>amarisoft_ue_2</id>
+        </testCase>
 
 	<testCase id="040000">
 		<class>Initialize_eNB</class>
