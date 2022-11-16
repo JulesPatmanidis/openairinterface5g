@@ -350,7 +350,11 @@ void ul_ports_config(NR_UE_MAC_INST_t *mac, int *n_front_load_symb, nfapi_nr_ue_
   uint8_t rank = pusch_config_pdu->nrOfLayers;
 
   NR_BWP_Id_t ul_bwp_id = mac->UL_BWP_Id;
-  NR_ServingCellConfigCommon_t *scc = mac->scc;
+  NR_BWP_UplinkCommon_t *initialUplinkBWP;
+  if (mac->scc)
+    initialUplinkBWP = mac->scc->uplinkConfigCommon->initialUplinkBWP;
+  else
+    initialUplinkBWP = &mac->scc_SIB->uplinkConfigCommon->initialUplinkBWP;
   NR_BWP_UplinkDedicated_t *ubwpd=NULL;
 
   if (mac->cg &&
@@ -367,7 +371,7 @@ void ul_ports_config(NR_UE_MAC_INST_t *mac, int *n_front_load_symb, nfapi_nr_ue_
   if (pusch_Config->transformPrecoder)
     transformPrecoder = *pusch_Config->transformPrecoder;
   else {
-    if(scc->uplinkConfigCommon->initialUplinkBWP->rach_ConfigCommon->choice.setup->msg3_transformPrecoder)
+    if(initialUplinkBWP->rach_ConfigCommon->choice.setup->msg3_transformPrecoder)
       transformPrecoder = NR_PUSCH_Config__transformPrecoder_enabled;
     else
       transformPrecoder = NR_PUSCH_Config__transformPrecoder_disabled;
