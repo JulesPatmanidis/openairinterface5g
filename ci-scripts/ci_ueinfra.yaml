@@ -14,6 +14,7 @@ idefix:
   UENetwork : wwan0 
   HostIPAddress : 172.21.16.135
   HostUsername : oaicicd
+  HostPassword : oaicicd 
   MTU : 1500
 nrmodule2_quectel:
   ID: nrmodule2_quectel
@@ -32,7 +33,8 @@ nrmodule2_quectel:
   GetIP : ip a show dev  
   UENetwork : wwan0
   HostIPAddress : 172.21.16.139
-  HostUsername : nrmodule2 
+  HostUsername : nrmodule2
+  HostPassword : linux 
   StartCommands :
     - sudo -S ip link set dev wwan1 mtu 1500
   MTU : 1500
