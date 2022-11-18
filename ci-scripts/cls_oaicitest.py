@@ -425,93 +425,6 @@ class OaiCiTest():
 			if is_module:
 				module_ue.EnableTrace()
 				time.sleep(20)
-			"""
-			#case it is a quectel module (only 1 at a time supported at the moment)
-			if ue_kind == 'quectel':
-				Module_UE = cls_module_ue.Module_UE(InfraUE.ci_ue_infra[self.ue_id])
-				Module_UE.ue_trace=ue_trace
-				is_module=Module_UE.CheckCMProcess()
-				if is_module:
-					Module_UE.EnableTrace()
-					time.sleep(5)
-
-					# Looping attach / detach / wait to be successful at least once
-					cnt = 0
-					status = -1
-					while cnt < 4:
-						Module_UE.Command("wup")
-						logging.debug("Waiting for IP address to be assigned")
-						time.sleep(5)
-						logging.debug("Retrieve IP address")
-						status=Module_UE.GetModuleIPAddress()
-						if status==0:
-							cnt = 10
-						else:
-							cnt += 1
-							Module_UE.Command("detach")
-							time.sleep(20)
-
-					if cnt == 10 and status == 0:
-						HTML.CreateHtmlTestRow(Module_UE.UEIPAddress, 'OK', CONST.ALL_PROCESSES_OK)	
-						logging.debug('UE IP addresss : '+ Module_UE.UEIPAddress)
-						#execute additional commands from yaml file after UE attach
-						SSH = sshconnection.SSHConnection()
-						SSH.open(Module_UE.HostIPAddress, Module_UE.HostUsername, Module_UE.HostPassword)
-						if hasattr(Module_UE,'StartCommands'):
-							for startcommand in Module_UE.StartCommands:
-								cmd = 'echo ' + Module_UE.HostPassword + ' | ' + startcommand
-								SSH.command(cmd,'\$',5)
-						SSH.close()
-						#check that the MTU is as expected / requested
-						Module_UE.CheckModuleMTU()
-					else: #status==-1 failed to retrieve IP address
-						HTML.CreateHtmlTestRow('N/A', 'KO', CONST.UE_IP_ADDRESS_ISSUE)
-						self.AutoTerminateUEandeNB(HTML,RAN,COTS_UE,EPC,InfraUE,CONTAINERS)
-						return
-
-			#case it is a amarisoft ue (only 1 at a time supported at the moment)
-			elif ue_kind == 'amarisoft':
-                Module_UE = cls_module_ue.Module_UE(InfraUE.ci_ue_infra[self.ue_id])
-                is_module=Module_UE.CheckCMProcess()
-                if is_module:
-                    Module_UE.EnableTrace()
-                    time.sleep(5)
-                    cnt = 0
-                    status = -1
-                    while cnt < 4:
-                        Module_UE.Command('wup')
-                        logging.debug("waitng for IP address to be assigned")
-                        time.sleep(20)
-                        status = Module_UE.GetModuleIPAddress()
-                        logging.debug("Retrieve IP address")
-                        if status == 0:
-                            cnt = 10
-                        else:
-                            cnt +=1
-                            Module_UE.Command('detach')
-                            time.sleep(20)
-                    if cnt == 10 and status == 0:
-                        HTML.CreationHtmlTestRow(module_UE.UEIPAddress,'OK', CONST.ALL_PROCESSES_OK)
-                        logging.debug('UE IP address: ', Module_UE.UEIPAddress)
-                        SSH = sshconnection.SSHConnection()
-                        SSH.open(Module_UE.HostIPAddress, Module_UE.HostUsername, Module_UE.HostPassword)
-                        if hasattr(Module_UE, 'StartCommands'):
-                            for startcommand in Module_UE.StartCommands:
-                                cmd = 'echo' + Module_UE.HostPassword + '|' + startcommand
-                                SSH.command(cmd, '\$', 5)
-                        SSH.close()
-                        Module_UE.CheckModuleMTU()
-                    else:
-                        self.AutoTerminateUEandeNB(HTML, RAN, COTS_UE,EPC,InfraUE,CONTAINERS)
-                    
-				#AS_UE = cls_amarisoft_ue.AS_UE(InfraUE.ci_ue_infra[self.ue_id])
-				#HTML.CreateHtmlTestRow(AS_UE.Config, 'OK', CONST.ALL_PROCESSES_OK)
-				#AS_UE.RunScenario()
-				#AS_UE.WaitEndScenario()
-				#AS_UE.KillASUE()
-                """
-			'''else:
-				logging.warning("Incorrect UE Kind was detected")'''								
 
 
 	def InitializeOAIUE(self,HTML,RAN,EPC,COTS_UE,InfraUE,CONTAINERS):
@@ -3570,19 +3483,19 @@ class OaiCiTest():
 		else: #if an ID is specified, it is a module from the yaml infrastructure file
 			ue_kind = InfraUE.ci_ue_infra[self.ue_id]['Kind']
 			logging.debug("Detected UE Kind : " + ue_kind)
-			if ue_kind == 'quectel':
-				Module_UE = cls_module_ue.Module_UE(InfraUE.ci_ue_infra[self.ue_id])
-				Module_UE.ue_trace=ue_trace
-				Module_UE.Command("detach")
-				Module_UE.DisableTrace()
-				Module_UE.StopUE()
-				archive_destination=Module_UE.LogCollect()
-				if Module_UE.ue_trace=='yes':
-					HTML.CreateHtmlTestRow('QLog at : '+archive_destination, 'OK', CONST.ALL_PROCESSES_OK)
-				else:
-					HTML.CreateHtmlTestRow('QLog trace is disabled', 'OK', CONST.ALL_PROCESSES_OK)
-			elif ue_kind == 'amarisoft':
-				HTML.CreateHtmlTestRow('AS UE is already terminated', 'OK', CONST.ALL_PROCESSES_OK)
+			#if ue_kind == 'quectel':
+			Module_UE = cls_module_ue.Module_UE(InfraUE.ci_ue_infra[self.ue_id])
+			Module_UE.ue_trace=ue_trace
+				#Module_UE.Command("detach")
+			Module_UE.DisableTrace()
+			Module_UE.TerminateUEModule()
+			archive_destination=Module_UE.LogCollect()
+			if Module_UE.ue_trace=='yes':
+				HTML.CreateHtmlTestRow('QLog at : '+archive_destination, 'OK', CONST.ALL_PROCESSES_OK)
+			elif Module_UE.ue_trace=='No':
+				HTML.CreateHtmlTestRow('QLog trace is disabled', 'OK', CONST.ALL_PROCESSES_OK)
+			#elif ue_kind == 'amarisoft':
+			#	HTML.CreateHtmlTestRow('AS UE is already terminated', 'OK', CONST.ALL_PROCESSES_OK)
 			else:
 				logging.debug("Incorrect UE Kind was detected")
 

@@ -44,6 +44,7 @@
  070002
  050002
  050003
+ 010010
  010002
  000001
  030202
@@ -76,7 +77,11 @@
 		<desc>Run UE</desc>
 		<id>idefix</id>
         </testCase>
-
+	<testCase id= "010010">
+		<class>Detach_UE</class>
+		<desc>Detach UE</desc>
+		<id>idefix</id>
+        </testCase>
 
 	<testCase id="010002">
 		<class>Terminate_UE</class>

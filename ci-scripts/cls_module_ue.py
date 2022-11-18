@@ -182,7 +182,7 @@ class Module_UE:
 		mySSH.close()
 
 
-	def StopUE(self):
+	def TerminateUEModule(self):
 		mySSH = sshconnection.SSHConnection()
 		mySSH.open(self.HostIPAddress, self.HostUsername, self.HostPassword)
 		mySSH.command('nohup' + ' ' + self.Process['StopCmd'],'\$',5)
