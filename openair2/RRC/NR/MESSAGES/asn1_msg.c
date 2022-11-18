@@ -442,17 +442,14 @@ uint16_t do_SIB1_NR(rrc_gNB_carrier_data_t *carrier,
   initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList = 
        CALLOC(1,sizeof(struct NR_PDCCH_ConfigCommon__commonSearchSpaceList));
 
-  asn1cSequenceAdd(initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList->list,
-		   NR_SearchSpace_t, ss1);
-  ss1 = rrc_searchspace_config(true, 1, 0);
+  NR_SearchSpace_t *ss1 = rrc_searchspace_config(true, 1, 0);
+  ASN_SEQUENCE_ADD(&initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList->list, ss1);
 
-  asn1cSequenceAdd(initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList->list,
-		   NR_SearchSpace_t, ss2);
-  ss2 = rrc_searchspace_config(true, 2, 0);
+  NR_SearchSpace_t *ss2 = rrc_searchspace_config(true, 2, 0);
+  ASN_SEQUENCE_ADD(&initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList->list, ss2);
 
-  asn1cSequenceAdd(initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList->list,
-		   NR_SearchSpace_t, ss3);
-  ss3 = rrc_searchspace_config(true, 3, 0);
+  NR_SearchSpace_t *ss3 = rrc_searchspace_config(true, 3, 0);
+  ASN_SEQUENCE_ADD(&initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList->list, ss3);
 
   asn1cCallocOne(initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->searchSpaceSIB1,  0);
   asn1cCallocOne(initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->searchSpaceOtherSystemInformation, 3);
