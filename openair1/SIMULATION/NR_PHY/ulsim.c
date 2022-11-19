@@ -304,7 +304,6 @@ int main(int argc, char **argv)
   uint16_t nb_rb = 50;
   int Imcs = 9;
   uint8_t precod_nbr_layers = 1;
-  int gNB_id = 0;
   int tx_offset;
   int32_t txlev_sum = 0, atxlev[4];
   int start_rb = 0;
@@ -1098,6 +1097,7 @@ int main(int argc, char **argv)
 
         UE_proc.nr_slot_tx = slot;
         UE_proc.frame_tx = frame;
+        UE_proc.gNB_id   = 0;
 
         UL_tti_req->SFN = frame;
         UL_tti_req->Slot = slot;
@@ -1241,7 +1241,7 @@ int main(int argc, char **argv)
           /////////////////////////phy_procedures_nr_ue_TX///////////////////////
           ///////////
 
-          phy_procedures_nrUE_TX(UE, &UE_proc, gNB_id, &phy_data);
+          phy_procedures_nrUE_TX(UE, &UE_proc, &phy_data);
 
           /* We need to call common sending function to send signal */
           LOG_D(PHY, "Sending Uplink data \n");
