@@ -1249,6 +1249,7 @@ void ue_init_standalone_socket(int tx_port, int rx_port)
 
     /* Store Proxy (PNF) address */
     memcpy((uint8_t *) &pnf_addr, (uint8_t *) &server_address, addr_len);
+    pnf_addr.sin_port = htons(rx_port); /* We asume that the proxy uses the rx_port to send traffic to this UE (port rx_port) */
   }
 
   {
