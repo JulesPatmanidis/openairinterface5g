@@ -532,6 +532,7 @@ int main( int argc, char **argv ) {
 
   int CC_id;
   uint8_t  abstraction_flag=0;
+  int ue_id = atoi(argv[argc-1]); // Add extra argument (ioulios)
   // Default value for the number of UEs. It will hold,
   // if not changed from the command line option --num-ues
   NB_UE_INST = 1;
@@ -539,7 +540,7 @@ int main( int argc, char **argv ) {
   NB_eNB_INST = 1;
   configmodule_interface_t *config_mod;
   start_background_system();
-  config_mod = load_configmodule(argc, argv, CONFIG_ENABLECMDLINEONLY);
+  config_mod = load_configmodule(argc - 1, argv, CONFIG_ENABLECMDLINEONLY); // Ignore last argument (ioulios)
 
   if (config_mod == NULL) {
     exit_fun("[SOFTMODEM] Error, configuration module init failed\n");
@@ -593,6 +594,9 @@ int main( int argc, char **argv ) {
   ue_id_g = (node_number == 0) ? 0 : node_number - 1; // ue_id_g = 0, 1
   AssertFatal(ue_id_g >= 0, "UE id is expected to be nonnegative.\n");
   init_pdcp(ue_id_g + 1);
+  printf("DEBUG: node_number %d\n", node_number);
+  printf("DEBUG: ue_id_g %d\n", ue_id_g);
+  printf("DEBUG: init_pdcp(%d)\n", ue_id_g + 1);
 
   //TTN for D2D
   printf ("RRC control socket\n");
@@ -670,7 +674,9 @@ int main( int argc, char **argv ) {
       abort();
     }
     init_UE_stub_single_thread(NB_UE_INST,eMBMS_active,uecap_xer_in,emul_iface);
-    init_UE_standalone_thread(ue_id_g);
+    
+    printf("DEBUG: init_ue(%d)\n", ue_id);
+    init_UE_standalone_thread(ue_id); // ue_id instead of ue_id_g (ioulios)
   } else {
     init_UE(NB_UE_INST,eMBMS_active,uecap_xer_in,0,get_softmodem_params()->phy_test,UE_scan,UE_scan_carrier,mode,(int)rx_gain[0][0],tx_max_power[0],
             frame_parms[0]);
