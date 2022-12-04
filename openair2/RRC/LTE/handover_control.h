@@ -1,4 +1,5 @@
 #include "rrc_defs.h"
+#include "rrc_UE.c"
 
 static uint8_t check_trigger_meas_event_custom(module_id_t module_idP,
                                                frame_t frameP,
