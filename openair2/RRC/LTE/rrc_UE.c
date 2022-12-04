@@ -4620,7 +4620,7 @@ void ue_measurement_report_triggering(protocol_ctxt_t *const ctxt_pP, const uint
                 case LTE_ReportConfigEUTRA__triggerType__event__eventId_PR_eventA3:
                   LOG_D(RRC,"[UE %d] Frame %d : A3 event: check if a neighboring cell becomes offset better than serving to trigger a measurement event \n",
                         ctxt_pP->module_id, ctxt_pP->frame);
-		  printf("DEBUG: check_trigger: %d, RRC_CONNECTED: %d, T304_active is0: %d, HandoverInfoUe.measFlag == 1: %d, counter: %d\n", check_trigger_meas_event(ctxt_pP->module_id,ctxt_pP->frame,eNB_index,i,j,ofn,ocn,hys,ofs,ocs,a3_offset,ttt_ms), ue->Info[0].State >= RRC_CONNECTED, ue->Info[0].T304_active == 0, ue->HandoverInfoUe.measFlag == 1, counter);
+		              printf("DEBUG: check_trigger: %d, RRC_CONNECTED: %d, T304_active is0: %d, HandoverInfoUe.measFlag == 1: %d, counter: %d\n", check_trigger_meas_event(ctxt_pP->module_id,ctxt_pP->frame,eNB_index,i,j,ofn,ocn,hys,ofs,ocs,a3_offset,ttt_ms), ue->Info[0].State >= RRC_CONNECTED, ue->Info[0].T304_active == 0, ue->HandoverInfoUe.measFlag == 1, counter);
                   if ((check_trigger_meas_event_custom(
                          ctxt_pP->module_id,
                          ctxt_pP->frame,
@@ -4629,7 +4629,7 @@ void ue_measurement_report_triggering(protocol_ctxt_t *const ctxt_pP, const uint
                       (ue->Info[0].State >= RRC_CONNECTED) &&
                       (ue->Info[0].T304_active == 0 )      &&
                       (ue->HandoverInfoUe.measFlag == 1 && counter > 5000)) {
-		    printf("DEBUG: handover?\n");
+		                printf("DEBUG: handover?\n");
                     //trigger measurement reporting procedure (36.331, section 5.5.5)
                     if (ue->measReportList[i][j] == NULL) {
                       ue->measReportList[i][j] = malloc(sizeof(MEAS_REPORT_LIST));
@@ -4642,7 +4642,7 @@ void ue_measurement_report_triggering(protocol_ctxt_t *const ctxt_pP, const uint
                       eNB_index);
                     ue->HandoverInfoUe.measFlag = 1;
                   } else {
-		    printf("DEBUG: No Handover\n");
+		                printf("DEBUG: No Handover\n");
                     if(ue->measReportList[i][j] != NULL) {
                       free(ue->measReportList[i][j]);
                     }

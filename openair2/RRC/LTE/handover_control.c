@@ -1,3 +1,4 @@
+#include "handover_control.h"
 #include "rrc_defs.h"
 
 static uint8_t check_trigger_meas_event_custom(module_id_t module_idP,

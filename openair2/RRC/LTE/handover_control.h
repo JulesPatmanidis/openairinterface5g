@@ -11,4 +11,4 @@ static uint8_t check_trigger_meas_event_custom(module_id_t module_idP,
                                                LTE_Q_OffsetRange_t ofs,
                                                LTE_Q_OffsetRange_t ocs,
                                                long a3_offset,
-                                               LTE_TimeToTrigger_t ttt)
+                                               LTE_TimeToTrigger_t ttt);
