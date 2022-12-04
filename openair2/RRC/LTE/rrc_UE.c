@@ -86,6 +86,7 @@
 #include "LTE_SystemInformationBlockType1-MBMS-r14.h"
 #include "LTE_NonMBSFN-SubframeConfig-r14.h"
 
+#include "handover_control.h"
 
 #include "LTE_SL-Preconfiguration-r12.h"
 
@@ -4620,7 +4621,7 @@ void ue_measurement_report_triggering(protocol_ctxt_t *const ctxt_pP, const uint
                   LOG_D(RRC,"[UE %d] Frame %d : A3 event: check if a neighboring cell becomes offset better than serving to trigger a measurement event \n",
                         ctxt_pP->module_id, ctxt_pP->frame);
 		  printf("DEBUG: check_trigger: %d, RRC_CONNECTED: %d, T304_active is0: %d, HandoverInfoUe.measFlag == 1: %d, counter: %d\n", check_trigger_meas_event(ctxt_pP->module_id,ctxt_pP->frame,eNB_index,i,j,ofn,ocn,hys,ofs,ocs,a3_offset,ttt_ms), ue->Info[0].State >= RRC_CONNECTED, ue->Info[0].T304_active == 0, ue->HandoverInfoUe.measFlag == 1, counter);
-                  if ((check_trigger_meas_event(
+                  if ((check_trigger_meas_event_custom(
                          ctxt_pP->module_id,
                          ctxt_pP->frame,
                          eNB_index,
