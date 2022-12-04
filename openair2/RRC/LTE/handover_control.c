@@ -14,7 +14,7 @@ static uint8_t check_trigger_meas_event_custom(module_id_t module_idP,
                                                long a3_offset,
                                                LTE_TimeToTrigger_t ttt)
 {
-  uint8_t oai_check = check_trigger_meas_event(module_idP, frameP, eNB_index, ue_cnx_index, meas_index, ofn, ocn, hys, ofs, ocs, a3_offset, ttt);
+  uint8_t oai_check = 0;//check_trigger_meas_event(module_idP, frameP, eNB_index, ue_cnx_index, meas_index, ofn, ocn, hys, ofs, ocs, a3_offset, ttt);
   printf("DEBUG: Inside wrapper function!");
   return oai_check;
 }
