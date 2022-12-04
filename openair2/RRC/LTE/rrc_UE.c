@@ -87,6 +87,8 @@
 #include "LTE_NonMBSFN-SubframeConfig-r14.h"
 
 #include "handover_control.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "LTE_SL-Preconfiguration-r12.h"
 
@@ -4734,7 +4736,9 @@ void ue_measurement_report_triggering(protocol_ctxt_t *const ctxt_pP, const uint
 
 //check_trigger_meas_event(ue_mod_idP, frameP, eNB_index, i,j,ofn,ocn,hys,ofs,ocs,a3_offset,ttt_ms)
 //-----------------------------------------------------------------------------
-
+/**
+ * @brief Returns 1 if handover should be triggered based on measurments, 0 otherwise
+ */
 uint8_t check_trigger_meas_event(
   module_id_t     ue_mod_idP,
   frame_t         frameP,
@@ -4813,8 +4817,20 @@ static uint8_t check_trigger_meas_event_custom(module_id_t module_idP,
                                                LTE_TimeToTrigger_t ttt)
 {
   uint8_t oai_check = check_trigger_meas_event(module_idP, frameP, eNB_index, ue_cnx_index, meas_index, ofn, ocn, hys, ofs, ocs, a3_offset, ttt);
-  printf("DEBUG: Inside wrapper function!");
-  return oai_check;
+  uint8_t num;
+  FILE *fptr;
+
+  if ((fptr = fopen("~/handover_table.txt","r")) == NULL){
+      printf("DEBUG: Error! opening handover_table.txt file\n");
+      return 0;
+  }
+
+  fscanf(fptr,"%d", &num);
+
+  printf("DEBUG: File content -> %d\n", num);
+  fclose(fptr); 
+  
+  return (num == 1) ? 1 : 0;
 }
 
 //-----------------------------------------------------------------------------
