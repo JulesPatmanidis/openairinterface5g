@@ -4637,15 +4637,15 @@ void ue_measurement_report_triggering(protocol_ctxt_t *const ctxt_pP, const uint
                 case LTE_ReportConfigEUTRA__triggerType__event__eventId_PR_eventA3:
                   LOG_D(RRC,"[UE %d] Frame %d : A3 event: check if a neighboring cell becomes offset better than serving to trigger a measurement event \n",
                         ctxt_pP->module_id, ctxt_pP->frame);
-		              printf("DEBUG: check_trigger: %d, RRC_CONNECTED: %d, T304_active is0: %d, HandoverInfoUe.measFlag == 1: %d, counter: %d\n", check_trigger_meas_event(ctxt_pP->module_id,ctxt_pP->frame,eNB_index,i,j,ofn,ocn,hys,ofs,ocs,a3_offset,ttt_ms), ue->Info[0].State >= RRC_CONNECTED, ue->Info[0].T304_active == 0, ue->HandoverInfoUe.measFlag == 1, counter);
-                  if ((check_trigger_meas_event_custom(
+		              printf("DEBUG: %d >= RRC_CONNECTED: %d, T304_active is0: %d, HandoverInfoUe.measFlag == 1: %d, counter: %d\n",ue->Info[0].State, ue->Info[0].State >= RRC_CONNECTED, ue->Info[0].T304_active == 0, ue->HandoverInfoUe.measFlag == 1, counter);
+                  if ((check_trigger_meas_event(
                          ctxt_pP->module_id,
                          ctxt_pP->frame,
                          eNB_index,
                          i,j,ofn,ocn,hys,ofs,ocs,a3_offset,ttt_ms)) &&
                       (ue->Info[0].State >= RRC_CONNECTED) &&
                       (ue->Info[0].T304_active == 0 )      &&
-                      (ue->HandoverInfoUe.measFlag == 1 && counter > 5000)) {
+                      (ue->HandoverInfoUe.measFlag == 1)) {
 		                printf("DEBUG: handover?\n");
                     //trigger measurement reporting procedure (36.331, section 5.5.5)
                     if (ue->measReportList[i][j] == NULL) {
@@ -4764,14 +4764,14 @@ uint8_t check_trigger_meas_event(
 
   for (eNB_offset = 0; eNB_offset<1+get_n_adj_cells(ue_mod_idP,0); eNB_offset++) {
     /* RHS: Verify that idx 0 corresponds to currentCellIndex in rsrp array */
-    printf("DEBUG: offset %d, index %d, NB_eNB_INST %d\n", eNB_offset, eNB_index, NB_eNB_INST);
+    //printf("DEBUG: offset %d, index %d, NB_eNB_INST %d\n", eNB_offset, eNB_index, NB_eNB_INST);
     if((eNB_offset!=eNB_index)&&(eNB_offset<NB_eNB_INST)) {
       if(eNB_offset<eNB_index) {
         tmp_offset = eNB_offset;
       } else {
         tmp_offset = eNB_offset-1;
       }
-      printf("DEBUG: Source: %.3f, Target %.3f\n",UE_rrc_inst[ue_mod_idP].rsrp_db_filtered[eNB_offset]+ofn+ocn-hys, UE_rrc_inst[ue_mod_idP].rsrp_db_filtered[eNB_index]+ofs+ocs-1);
+      printf("DEBUG: Target: %.3f, Source %.3f\n",UE_rrc_inst[ue_mod_idP].rsrp_db_filtered[eNB_offset]+ofn+ocn-hys, UE_rrc_inst[ue_mod_idP].rsrp_db_filtered[eNB_index]+ofs+ocs-1);
       if(UE_rrc_inst[ue_mod_idP].rsrp_db_filtered[eNB_offset]+ofn+ocn-hys > UE_rrc_inst[ue_mod_idP].rsrp_db_filtered[eNB_index]+ofs+ocs-1/*+a3_offset*/) {
         UE_rrc_inst->measTimer[ue_cnx_index][meas_index][tmp_offset] += 2; //Called every subframe = 2ms
         LOG_D(RRC,"[UE %d] Frame %d: Entry measTimer[%d][%d][%d]: %d currentCell: %d betterCell: %d \n",
@@ -4817,6 +4817,7 @@ static uint8_t check_trigger_meas_event_custom(module_id_t module_idP,
                                                LTE_TimeToTrigger_t ttt)
 {
   uint8_t oai_check = check_trigger_meas_event(module_idP, frameP, eNB_index, ue_cnx_index, meas_index, ofn, ocn, hys, ofs, ocs, a3_offset, ttt);
+  printf("check_trigger_meas_event: %d\n", oai_check);
   uint8_t num;
   FILE *fptr;
 
@@ -4826,8 +4827,7 @@ static uint8_t check_trigger_meas_event_custom(module_id_t module_idP,
   }
 
   fscanf(fptr,"%d", &num);
-
-  printf("DEBUG: File content -> %d\n", num);
+  //printf("DEBUG: File content -> %d\n", num);
   fclose(fptr); 
   
   return (num == 1) ? 1 : 0;
