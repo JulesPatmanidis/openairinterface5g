@@ -39,7 +39,8 @@
 #include "openair1/PHY/LTE_TRANSPORT/transport_common.h"
 #include "softmodem-common.h"
 
-#include "handover_control.h"
+#include "common/utils/lte/handover_control.h"
+
 
 extern int oai_nfapi_rach_ind(nfapi_rach_indication_t *rach_ind);
 void configure_nfapi_pnf(char *vnf_ip_addr,
@@ -2221,7 +2222,7 @@ static bool should_drop_transport_block(int sf, uint16_t rnti)
 
 float update_measurements(uint16_t sfn_sf, int eNB_index)
 {
-  printf("DEBUG: get_fake_measurement(%d) = %d\n", eNB_index, get_fake_measurment(eNB_index));
-  return get_fake_measurment(eNB_index);
+  printf("DEBUG: get_fake_measurement(%d) = %f\n", eNB_index, get_fake_measurement(eNB_index));
+  return get_fake_measurement(eNB_index);
   //return sf_rnti_mcs[sfn_sf & 15].rsrp[eNB_index];
 }

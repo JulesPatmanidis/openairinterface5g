@@ -86,7 +86,8 @@
 #include "LTE_SystemInformationBlockType1-MBMS-r14.h"
 #include "LTE_NonMBSFN-SubframeConfig-r14.h"
 
-#include "handover_control.h"
+#include "common/utils/lte/handover_control.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 

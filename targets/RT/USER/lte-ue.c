@@ -63,6 +63,8 @@
 #include "common/config/config_userapi.h"
 #include "T.h"
 
+#include "common/utils/lte/handover_control.h"
+
 extern double cpuf;
 extern uint8_t ue_id_kube;
 
@@ -1134,7 +1136,7 @@ static void *UE_phy_stub_standalone_pnf_task(void *arg) {
     for (ue_index = 0; ue_index < ue_num; ue_index++) {
       ue_Mod_id = ue_thread_id + NB_THREAD_INST * ue_index; // Always 0 in standalone pnf mode
       UE = PHY_vars_UE_g[ue_Mod_id][0];
-      generate_rsrp_measurment_from_file("/root/handover_table.txt", ue_id_kube);
+      generate_rsrp_measurement_from_file("/root/handover_table.txt", ue_id_kube);
       for (int i = 0; i < NB_eNB_INST; i++) {
         UE->measurements.rsrp_filtered[i] = update_measurements(sfn_sf, i);
         UE->measurements.rsrq_filtered[i] = UE->measurements.rsrp_filtered[i] / 20;

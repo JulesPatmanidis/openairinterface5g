@@ -1,5 +1,8 @@
 #include "handover_control.h"
 
+const float RSRP_GOOD_MEASUREMENT = 40.0;
+long long start_time = 0;
+
 long long get_time_ms()
 {
   struct timeval te;
@@ -27,12 +30,12 @@ static uint8_t check_trigger_meas_event_custom(module_id_t module_idP,
   return oai_check;
 }
 
-float get_fake_measurment(uint8_t eNB_index)
+float get_fake_measurement(uint8_t eNB_index)
 {
   return eNB_fake_rsrp_measurements[eNB_index];
 }
 
-void generate_rsrp_measurment_from_file(char *filename, uint8_t ue_id)
+void generate_rsrp_measurement_from_file(char *filename, uint8_t ue_id)
 {
   if (start_time == 0) {
     start_time = get_time_ms();
@@ -69,7 +72,7 @@ void generate_rsrp_measurment_from_file(char *filename, uint8_t ue_id)
   for (uint8_t enb_offset = 0; enb_offset < NB_eNB_INST; enb_offset++) {
     eNB_fake_rsrp_measurements[enb_offset] = (enb_offset == target_eNB) ? RSRP_GOOD_MEASUREMENT : 0.0;
   }
-  printf("DEBUG: fake measurments generated! start: %ll current: %ll\n", start_time, current_time);
+  printf("DEBUG: fake measurments generated! start: %lld current: %lld\n", start_time, current_time);
   fclose(fptr);
   return 0;
 }
