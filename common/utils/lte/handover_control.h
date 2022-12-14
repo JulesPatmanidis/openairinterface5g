@@ -10,7 +10,7 @@
 
 const float RSRP_GOOD_MEASUREMENT;
 
-uint8_t eNB_fake_rsrp_measurements[NB_eNB_INST];
+uint8_t eNB_fake_rsrp_measurements[10];
 extern long long start_time;
 
 long long get_time_ms();
@@ -28,7 +28,7 @@ static uint8_t check_trigger_meas_event_custom(module_id_t module_idP,
                                                long a3_offset,
                                                LTE_TimeToTrigger_t ttt);
 
-void generate_rsrp_measurement_from_file(char * filename, uint8_t ue_id);
+void generate_rsrp_measurement_from_file(char * filename);
 
 float get_fake_measurement(uint8_t eNB_index);
 

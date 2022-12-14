@@ -35,7 +35,7 @@ float get_fake_measurement(uint8_t eNB_index)
   return eNB_fake_rsrp_measurements[eNB_index];
 }
 
-void generate_rsrp_measurement_from_file(char *filename, uint8_t ue_id)
+void generate_rsrp_measurement_from_file(char *filename)
 {
   if (start_time == 0) {
     start_time = get_time_ms();
@@ -51,21 +51,17 @@ void generate_rsrp_measurement_from_file(char *filename, uint8_t ue_id)
     return 0;
   }
 
-  int tmp_ue_id, enb_id, time_offset;
+  int enb_id, time_offset;
   int line_count = 0;
   current_time = get_time_ms();
   while (fgets(line, sizeof(line), fptr)) {
     line_count++;
-    if (line_count == 1) {
-      continue;
-    }
 
-    sscanf(line, "%d,%d,%d", &tmp_ue_id, &enb_id, &time_offset);
+    sscanf(line, "%d,%d", &enb_id, &time_offset);
 
-    if (tmp_ue_id != ue_id)
-      continue;
     if (current_time < start_time + time_offset)
       continue;
+      
     target_eNB = enb_id;
   }
 
